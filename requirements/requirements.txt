@@ -1,0 +1,9 @@
+requests==2.26.0
+aiohttp==3.8.1
+pydantic==1.9.1
+mariadb==1.0.9
+sqlalchemy[asyncio]==1.4.31
+alembic==1.7.1
+mysqlclient==2.1.0
+PyMySQL==1.0.2
+asyncmy==0.2.3
