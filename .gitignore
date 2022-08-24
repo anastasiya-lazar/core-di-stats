@@ -77,3 +77,4 @@ old_authorization_controller.py
 *.build
 azure_deployment.yaml
 .env
+envs/

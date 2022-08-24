@@ -2,9 +2,8 @@ from datetime import datetime
 from enum import Enum
 from uuid import uuid4
 
-from sqlalchemy.orm import declarative_base, relationship
-from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String,
-                        Text)
+from sqlalchemy.orm import declarative_base
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String,)
 
 Base = declarative_base()
 
@@ -35,7 +34,7 @@ class IngestionRequestStatus(Base):
 class IngestionRequestFilter(Base):
     __tablename__ = "ingestion_request_filter"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True)
     request_id = Column(String(128), ForeignKey("ingestion_request_status.id"))
     attribute = Column(String(80))
     value = Column(String(256))
@@ -45,7 +44,7 @@ class IngestionRequestFilter(Base):
 class SubscriberIngestionStatus(Base):
     __tablename__ = "subscriber_ingestion_status"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True)
     request_id = Column(String(128), ForeignKey("ingestion_request_status.id"))
     source_id = Column(String(128))
     file_uri = Column(String(256))
@@ -63,7 +62,7 @@ class SubscriberIngestionStatus(Base):
 class IngestionStatus(Base):
     __tablename__ = "ingestion_status"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True)
     request_id = Column(String(128), ForeignKey("ingestion_request_status.id"))
     source_id = Column(String(128))
     file_uri = Column(String(256))

@@ -17,13 +17,11 @@ services:
       - .env
     networks:
       - core-fkg-network
-    ports:
-      - ${HEALTH_CHECK_PORT}:${HEALTH_CHECK_PORT}
 
   core-di-stats-handler-gen1-stats-db-mysql:
     profiles:
-        - mysql
-    image: mysql:8.0
+      - mysql
+    image: mysql:8.0.30
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}
@@ -31,7 +29,7 @@ services:
       MYSQL_ALLOW_EMPTY_PASSWORD: 1
       MYSQL_USER: ${DB_USERNAME}
     ports:
-      - 3307:3306
+      - "3302:3306"
     volumes:
       - core-di-stats-handler-gen1-stats-db-volume-mysql:/var/lib/mysql
     networks:
@@ -41,27 +39,27 @@ services:
       interval: 5s
       timeout: 3s
 
+
   core-di-stats-handler-gen1-db-initializer-mysql:
     profiles:
       - mysql
     container_name: core-di-stats-handler-gen1-db-initializer-mysql
     build:
       dockerfile: Dockerfile
-      target: dev
+      target: mysql_migration
       context: .
       args:
         PIP_EXTRA_INDEX_URL: ${PIP_EXTRA_INDEX_URL}
-    command: ["bash", "/usr/src/helper_scripts/migrate_db.sh"]
     depends_on:
-      - core-di-stats-handler-gen1-stats-db-mysql
+      core-di-stats-handler-gen1-stats-db-mysql:
+        condition: service_healthy
     env_file:
       - .env
     networks:
       - core-fkg-network
     volumes:
-      - "./src:/usr/src/app"
-      - "./src/solution/sp/sql_base/mysql:/usr/src/alembic"
-      - "./helper_scripts:/usr/src/helper_scripts"
+      - "./src/solution/sp/sql_base/mysql:/migrations"
+
 
   core-di-stats-handler-gen1-stats-db-mariadb:
     profiles:
@@ -74,7 +72,7 @@ services:
       MARIADB_ALLOW_EMPTY_PASSWORD: 1
       MARIADB_USER: ${DB_USERNAME}
     ports:
-      - 3305:3306
+      - "3305:3306"
     volumes:
       - core-di-stats-handler-gen1-stats-db-volume-mariadb:/var/lib/mariadb
     networks:
@@ -92,11 +90,10 @@ services:
     container_name: core-di-stats-handler-gen1-db-initializer-mariadb
     build:
       dockerfile: Dockerfile
-      target: dev
+      target: mariadb_migration
       context: .
       args:
         PIP_EXTRA_INDEX_URL: ${PIP_EXTRA_INDEX_URL}
-    command: [ "bash", "/usr/src/helper_scripts/migrate_db.sh" ]
     depends_on:
       core-di-stats-handler-gen1-stats-db-mariadb:
         condition: service_healthy
@@ -105,9 +102,7 @@ services:
     networks:
       - core-fkg-network
     volumes:
-      - "./src:/usr/src/app"
-      - "./src/solution/sp/sql_base/mariadb:/usr/src/alembic"
-      - "./helper_scripts:/usr/src/helper_scripts"
+      - "./src/solution/sp/sql_base/mariadb:/migrations"
 
 volumes:
   core-di-stats-handler-gen1-stats-db-volume-mysql: {}

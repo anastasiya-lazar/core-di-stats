@@ -63,3 +63,15 @@ compose_up: ## Start services
 	    docker-compose --profile mariadb up --build; \
 	else echo "No DB_TYPE env set"; \
 	fi
+
+create_migrations_mariadb:
+	docker-compose --profile mariadb up -d;
+	docker-compose run core-di-stats-handler-gen1 bash -c "cd solution/sp/sql_base/mariadb/ && alembic revision --autogenerate"
+	docker-compose down
+	echo "Add newly created migrations to the repository: git add new_files..."
+
+create_migrations_mysql:
+	docker-compose --profile mysql up -d;
+	docker-compose run core-di-stats-handler-gen1 bash -c "cd solution/sp/sql_base/mysql/ && alembic revision --autogenerate"
+	docker-compose down
+	echo "Add newly created migrations to the repository: git add new_files..."

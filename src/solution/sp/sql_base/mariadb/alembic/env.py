@@ -24,7 +24,8 @@ target_metadata = None
 try:
     from solution.sp.sql_base.models import Base
     target_metadata = Base.metadata
-except:
+except Exception as e:
+    print(e)
     print("CUSTOM METADATA IS IGNORED")
 
 
