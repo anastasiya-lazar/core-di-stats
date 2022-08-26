@@ -1,0 +1,57 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{.Values.name}}-{{ now | date "20060102150405" }}
+spec:
+  {{/*Set timeout to autoclear job to 10 minutes. If you need redeploy it, less, that 10 minutes - do it manually*/}}
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      volumes:
+        - name: cert
+          configMap:
+            name: fkg-db-cert
+      containers:
+        - name: {{.Values.container.name}}
+          image: {{.Values.container.image}}
+          volumeMounts:
+            - mountPath: /cert
+              name: cert
+          env:
+            - name: DB_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: DB_ENDPOINT
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: DB_NAME
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: DB_PASSWORD
+            - name: DB_TYPE
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: DB_TYPE
+            - name: DB_SSL_PATH_CERT
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: DB_SSL_PATH_CERT
+            - name: DB_SSL_ENABLED
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: DB_SSL_ENABLED
+      restartPolicy: OnFailure
+  backoffLimit: 3

@@ -14,6 +14,32 @@ ENV_FILE?=$(WORKDIR)/.env
 include $(ENV_FILE)
 export $(cut -d= -f1 $(ENV_FILE) | grep -v -e "#")
 
+HELM_EXPERIMENTAL_OCI=1
+
+VERSION?=0.0.1_build$(shell date +%s )
+NAME?=core-di-gen1-stats-handler
+
+# Azure deployment
+CLUSTER?=toronto-backend-cluster
+AZ_AKS_REPO_NAME?=akstoronto
+AKS_REPO?=$(AZ_AKS_REPO_NAME).azurecr.io
+AZURE_REGESTRY_IMAGE_NAME?=$(AKS_REPO)/$(NAME)
+AZURE_REGESTRY_MIGRATION_IMAGE_NAME?=$(AKS_REPO)/$(NAME)-migration
+AZURE_REGESTRY_TAG?=$(VERSION)
+
+DB_MIGRATION_ARTIFACT_INFO?=$(WORKDIR)/.build/db_migration_artifact_info
+AZ_IMAGE_ARTIFACT_INFO?=$(WORKDIR)/.build/az_image_artifact_info
+
+ifeq ($(DB_TYPE), MARIADB)
+DB_MIGRATION_TARGET?=mariadb_migration
+DB_VAULT?=di-stats-dev-db-mariadb
+else ifeq ($(DB_TYPE), MYSQL)
+DB_MIGRATION_TARGET?=mysql_migration
+DB_VAULT?=di-stats-dev-db-mysql
+else
+$(info DB_TYPE is not set!)
+endif
+
 __CHECK:=$(shell \
 	mkdir -p $(WORKDIR)/.build; \
   	if test -f .env; then \
@@ -75,3 +101,28 @@ create_migrations_mysql:
 	docker-compose run core-di-stats-handler-gen1 bash -c "cd solution/sp/sql_base/mysql/ && alembic revision --autogenerate"
 	docker-compose down
 	echo "Add newly created migrations to the repository: git add new_files..."
+
+aks_login: ## Log in AKS Repo
+	az acr login --name $(AZ_AKS_REPO_NAME)
+
+build_stats_db_migration_image: ## build image for apply db migrations
+	docker build \
+		--target $(DB_MIGRATION_TARGET) \
+		--build-arg PIP_EXTRA_INDEX_URL=$(PIP_EXTRA_INDEX_URL) \
+		-t $(AZURE_REGESTRY_MIGRATION_IMAGE_NAME):latest \
+		-f $(WORKDIR)/Dockerfile $(WORKDIR) ;
+	docker tag $(AZURE_REGESTRY_MIGRATION_IMAGE_NAME):latest $(AZURE_REGESTRY_MIGRATION_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
+	docker push   $(AZURE_REGESTRY_MIGRATION_IMAGE_NAME):latest
+	docker push   $(AZURE_REGESTRY_MIGRATION_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
+	echo $(AZURE_REGESTRY_MIGRATION_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
+	echo "$(AZURE_REGESTRY_MIGRATION_IMAGE_NAME):$(AZURE_REGESTRY_TAG)" > $(DB_MIGRATION_ARTIFACT_INFO)
+
+deploy_db_migrations: ## Deploy stats db and apply migrations
+	cd $(WORKDIR)/deployment/azure/db_migrations && \
+	terraform apply -auto-approve \
+    		-var="db_migration_docker_image=$$(cat $(DB_MIGRATION_ARTIFACT_INFO))" \
+    		-var="db_type=$(DB_TYPE)" \
+    		-var="vault_name=$(DB_VAULT)"
+
+migration_build_and_deploy: ## Build and Deploy Migrations
+migration_build_and_deploy: aks_login build_stats_db_migration_image deploy_db_migrations

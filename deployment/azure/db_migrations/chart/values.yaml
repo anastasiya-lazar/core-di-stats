@@ -1,0 +1,21 @@
+# Default values for KGMediator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+name: &name core-di-gen1-stats-db-migration-job
+
+metadata:
+  name: *name
+  labels:
+    app: *name
+
+container:
+  name: *name
+  image:
+
+db_type:
+db_endpoint:
+db_name:
+db_username:
+db_password:
+db_ssl_path_cert:
+db_ssl_enabled:
