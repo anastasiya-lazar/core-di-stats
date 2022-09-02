@@ -7,3 +7,8 @@ alembic==1.7.1
 mysqlclient==2.1.0
 PyMySQL==1.0.2
 asyncmy==0.2.3
+flask-log-request-id==0.10.1 # for bst logger
+core-shared-libs==4.0.0
+
+uvicorn==0.16.0
+fastapi==0.78.0
