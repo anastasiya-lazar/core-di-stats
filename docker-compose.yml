@@ -2,6 +2,7 @@ version: '3.9'
 
 services:
   core-di-stats-handler-gen1:
+    container_name: core-di-stats-handler-gen1
     profiles:
       - mysql
       - mariadb
@@ -11,10 +12,15 @@ services:
       context: .
       args:
         PIP_EXTRA_INDEX_URL: ${PIP_EXTRA_INDEX_URL}
+    command: ["ipython", "solution/channel/fastapi/main.py"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
-      - "./src:/usr/src/app/"
+      - "./src/:/usr/src/app"
     env_file:
       - .env
+    ports:
+      - ${REST_SERVER_PORT}:${REST_SERVER_PORT}
     networks:
       - core-fkg-network
 
