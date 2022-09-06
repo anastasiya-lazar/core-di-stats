@@ -78,3 +78,6 @@ old_authorization_controller.py
 azure_deployment.yaml
 .env
 envs/
+deployment/azure/db_migrations/.terraform*
+deployment/azure/stats_service/.terraform*
+.hooks/

@@ -1,4 +1,4 @@
-FROM python:3.8-buster as base
+FROM python:3.9-buster as base
 ARG PIP_EXTRA_INDEX_URL
 
 
@@ -51,3 +51,16 @@ WORKDIR /migrations
 COPY src/solution/sp/sql_base/mariadb /migrations
 
 ENTRYPOINT ["bash","./migrate_db.sh"]
+
+FROM base as azure_service
+ARG PIP_EXTRA_INDEX_URL
+
+#Azure related libs
+RUN apt-get update && apt-get install -y musl-dev libmariadb-dev && apt-get clean
+COPY requirements/requirements.azure.txt /requirements.azure.txt
+RUN pip3 install --no-cache-dir -r /requirements.azure.txt
+RUN apt-get update && apt-get install -y vim
+
+COPY src /usr/src/app
+
+ENTRYPOINT ["python", "./solution/channel/fastapi/main.py"]
