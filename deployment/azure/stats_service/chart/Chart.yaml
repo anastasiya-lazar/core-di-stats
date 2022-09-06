@@ -1,5 +1,5 @@
 apiVersion: v2
-name: core-di-gen1-stats-db-migration-job
+name: core-di-gen1-stats-worker
 description: A Helm chart for Kubernetes
 
 type: application

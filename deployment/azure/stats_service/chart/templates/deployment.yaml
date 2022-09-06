@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{.Values.metadata.name}}
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: {{.Values.metadata.name}}
+  template:
+    metadata:
+      labels:
+        app: {{.Values.metadata.name}}
+    spec:
+      nodeSelector:
+        "beta.kubernetes.io/os": linux
+      volumes:
+        - name: cert
+          configMap:
+            name: fkg-db-cert
+      containers:
+        - name: {{.Values.container.name}}
+          image: {{.Values.container.image}}
+          resources:
+            requests:
+              cpu: 1000m
+          volumeMounts:
+            - mountPath: /cert
+              name: cert
+          env:
+            - name: CURRENT_SERVICE_NAME
+              value: "{{.Values.serviceName}}"
+            - name: DEV
+              value: "{{.Values.dev}}"
+            - name: DEBUG
+              value: "{{.Values.dev}}"
+            - name: LOGGER_LEVEL
+              value: "{{.Values.log_level}}"
+            - name: CLOUD_PROVIDER_TYPE
+              value: "azure"
+            - name: WORKERS_NUMBER
+              value: '0'
+            - name: DB_TYPE
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: DB_TYPE
+            - name: DB_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: DB_ENDPOINT
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: DB_NAME
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: DB_USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: DB_PASSWORD
+            - name: DB_SSL_PATH_CERT
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: DB_SSL_PATH_CERT
+          livenessProbe:
+            httpGet:
+              path: /health_check
+              port: 8998
+            initialDelaySeconds: 15
+            periodSeconds: 10

@@ -126,3 +126,24 @@ deploy_db_migrations: ## Deploy stats db and apply migrations
 
 migration_build_and_deploy: ## Build and Deploy Migrations
 migration_build_and_deploy: aks_login build_stats_db_migration_image deploy_db_migrations
+
+build: ## build image, which is used for the services
+	docker build \
+		--target azure_service \
+		--build-arg PIP_EXTRA_INDEX_URL=$(PIP_EXTRA_INDEX_URL) \
+		-t $(AZURE_REGESTRY_IMAGE_NAME):latest \
+		-f $(WORKDIR)/Dockerfile $(WORKDIR);
+	docker tag $(AZURE_REGESTRY_IMAGE_NAME):latest $(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
+	docker push   $(AZURE_REGESTRY_IMAGE_NAME):latest
+	docker push   $(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
+	echo $(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
+	echo "$(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)" > $(AZ_IMAGE_ARTIFACT_INFO)
+
+deploy_service: ## Deploy stats handler service
+	cd $(WORKDIR)/deployment/azure/stats_service && \
+	terraform apply -auto-approve \
+    		-var="service_image=$$(cat $(AZ_IMAGE_ARTIFACT_INFO))"
+
+
+build_and_deploy: ## Build and Deploy
+build_and_deploy: aks_login build deploy_service
