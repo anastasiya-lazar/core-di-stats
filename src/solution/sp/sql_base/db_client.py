@@ -1,3 +1,5 @@
+import ssl
+
 from fastapi import HTTPException
 
 import config as conf
@@ -42,7 +44,7 @@ class DBClientSP(DBClientSPI):
     def _get_connect_args():
         args = {}
         if conf.DB_SSL_PATH_CERT:
-            args['ssl_key'] = conf.DB_SSL_PATH_CERT
+            args['ssl'] = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH, capath=conf.DB_SSL_PATH_CERT)
         return args
 
     async def _insert(self, row: Base):
