@@ -35,13 +35,10 @@ def get_connection_string():
     db_password = os.environ.get("DB_PASSWORD", "")
     db_name = os.environ.get("DB_NAME", "")
     db_user_host = os.environ.get("DB_USER_HOST", "")
-    db_type = os.environ.get("DB_TYPE", "mysql")
     if db_user_host:
         db_username += f"@{db_user_host}"
-    print("-----------------")
-    print(config.get_section(config.config_ini_section))
-
     section = config.get_section(config.config_ini_section)
+    print(section)
     return section["sqlalchemy.url"].format(db_username, db_password, db_endpoint, db_port, db_name)
 
 
