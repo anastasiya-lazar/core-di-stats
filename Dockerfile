@@ -33,8 +33,9 @@ RUN pip3 install  sqlalchemy[asyncio]==1.4.31 mysqlclient==2.0.3 pymysql==1.0.2 
 
 RUN mkdir /migrations
 WORKDIR /migrations
+ENV DB_TYPE=MYSQL
 
-COPY src/solution/sp/sql_base/mysql /migrations
+COPY src/solution/sp/sql_base/migrations /migrations
 
 
 ENTRYPOINT ["bash","./migrate_db.sh"]
@@ -47,8 +48,9 @@ RUN pip3 install sqlalchemy[asyncio]==1.4.31 mysqlclient==2.0.3 pymysql==1.0.2 a
 
 RUN mkdir /migrations
 WORKDIR /migrations
+ENV DB_TYPE=MARIADB
 
-COPY src/solution/sp/sql_base/mariadb /migrations
+COPY src/solution/sp/sql_base/migrations /migrations
 
 ENTRYPOINT ["bash","./migrate_db.sh"]
 
