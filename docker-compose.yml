@@ -64,7 +64,7 @@ services:
     networks:
       - core-fkg-network
     volumes:
-      - "./src/solution/sp/sql_base/mysql:/migrations"
+      - "./src/solution/sp/sql_base/migrations:/migrations"
 
 
   core-di-stats-handler-gen1-stats-db-mariadb:
@@ -108,7 +108,7 @@ services:
     networks:
       - core-fkg-network
     volumes:
-      - "./src/solution/sp/sql_base/mariadb:/migrations"
+      - "./src/solution/sp/sql_base/migrations:/migrations"
 
 volumes:
   core-di-stats-handler-gen1-stats-db-volume-mysql: {}

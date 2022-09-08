@@ -14,4 +14,4 @@ fi
 
 echo "Start migrations"
 
-alembic upgrade head
+alembic -n `echo "print('$DB_TYPE'.lower())" | python3` upgrade head

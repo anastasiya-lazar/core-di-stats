@@ -1,11 +1,13 @@
 import asyncio
 import os
 import ssl
+
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncEngine
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -15,11 +17,8 @@ config = context.config
 # This line sets up loggers basically.
 fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
 target_metadata = None
+
 
 try:
     from solution.sp.sql_base.models import Base
@@ -36,12 +35,14 @@ def get_connection_string():
     db_password = os.environ.get("DB_PASSWORD", "")
     db_name = os.environ.get("DB_NAME", "")
     db_user_host = os.environ.get("DB_USER_HOST", "")
+    db_type = os.environ.get("DB_TYPE", "mysql")
     if db_user_host:
         db_username += f"@{db_user_host}"
-    default_connection_string = f"mariadb+asyncmy://{db_username}:{db_password}@{db_endpoint}:{db_port}/{db_name}"
-    print('-'*40)
-    print(default_connection_string)
-    return default_connection_string
+    print("-----------------")
+    print(config.get_section(config.config_ini_section))
+
+    section = config.get_section(config.config_ini_section)
+    return section["sqlalchemy.url"].format(db_username, db_password, db_endpoint, db_port, db_name)
 
 
 def get_connect_args():
