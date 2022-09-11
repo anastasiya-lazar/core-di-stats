@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
 from sqlalchemy.future import select
 from sqlalchemy.orm import sessionmaker
 
-from core.api.dtos import StatusResponseSchema
+from core.api.dtos import StatusResponseSchema, MediatorIngestionSchema
 from core.spi.db_client import DBClientSPI
 from solution.sp.sql_base.models import IngestionRequestStatus, Base
 
@@ -55,17 +55,17 @@ class DBClientSP(DBClientSPI):
             await session.commit()
             return row_id
 
-    async def insert_new_request(self, request_params: dict) -> str:
+    async def insert_new_request(self, payload: MediatorIngestionSchema) -> str:
         """
         Insert new request to the DB and return it ID
-        :param request_params: parameters of the request
+        :param payload: parameters of the request
         :return: id of the DB record
         """
 
-        request = IngestionRequestStatus(**request_params)
+        request = IngestionRequestStatus(**payload.dict())
         return await self._insert(request)
 
-    async def get_request_status(self, request_id: str) -> dict:
+    async def get_request_status(self, request_id: str) -> StatusResponseSchema:
         """
         Get status of request
         :param request_id:
@@ -76,14 +76,4 @@ class DBClientSP(DBClientSPI):
             resp = query.scalars().first()
             if resp is None:
                 raise HTTPException(status_code=404, detail=f"Can not fund request by id {request_id}")
-        return StatusResponseSchema(tenant_id=resp.tenant_id,
-                                    app_id=resp.app_id,
-                                    entity_type=resp.entity_type,
-                                    src_type=resp.src_type,
-                                    is_batch_required=resp.is_batch_required,
-                                    batch_size=resp.batch_size,
-                                    enrich_oncreation=resp.enrich_oncreation,
-                                    status=resp.status,
-                                    start_time=resp.start_time,
-                                    end_time=resp.end_time,
-                                    ).dict(exclude_none=True)
+        return StatusResponseSchema.from_orm(resp)
