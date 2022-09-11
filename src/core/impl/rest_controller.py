@@ -6,7 +6,7 @@ from solution.profile import profile
 class RestController(StatsController):
 
     async def ingest_data(self, payload: MediatorIngestionSchema):
-        db_params = MediatorIngestionSchema(**payload.dict()).dict()
+        db_params = MediatorIngestionSchema(**payload.dict())
         request_id = await profile.db_client.insert_new_request(db_params)
         return {'request_id': request_id}
 

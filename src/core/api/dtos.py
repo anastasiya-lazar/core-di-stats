@@ -25,3 +25,5 @@ class StatusResponseSchema(BaseModel):
     status: str
     start_time: datetime
     end_time: Optional[datetime]
+    class Config:
+        orm_mode = True

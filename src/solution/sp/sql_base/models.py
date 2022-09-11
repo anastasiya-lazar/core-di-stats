@@ -3,7 +3,7 @@ from enum import Enum
 from uuid import uuid4
 
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String,)
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String, func, )
 
 Base = declarative_base()
 
@@ -56,7 +56,7 @@ class SubscriberIngestionStatus(Base):
     total_failed_count = Column(Integer, default=0)
     total_success_count = Column(Integer, default=0)
     status_url = Column(String(256))
-    last_stat_updated = Column(DateTime())
+    last_stat_updated = Column(DateTime(), onupdate=func.now())
 
 
 class IngestionStatus(Base):
@@ -74,4 +74,4 @@ class IngestionStatus(Base):
     total_failed_count = Column(Integer, default=0)
     total_success_count = Column(Integer, default=0)
     source_queue_name = Column(String(256))
-    last_stat_updated = Column(DateTime())
+    last_stat_updated = Column(DateTime(), onupdate=func.now())
