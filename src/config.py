@@ -42,3 +42,5 @@ DB_TYPE = DBType(os.environ.get("DB_TYPE", "").upper())
 db_driver = DB_DRIVERS[DB_TYPE]
 
 REQUEST_DB_CONNECTION_STRING = f"{db_driver}+asyncmy://{DB_USERNAME}:{DB_PASSWORD}@{DB_ENDPOINT}:{DB_PORT}/{DB_NAME}"
+
+AUTHENTICATOR_URL = os.environ.get("AUTHENTICATOR_URL")
