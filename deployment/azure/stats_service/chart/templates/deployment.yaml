@@ -2,6 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{.Values.metadata.name}}
+  annotations:
+    maintainer.team: {{.Values.maintainer_team}}
+    maintainer.contact: {{.Values.maintainer_contact}}
 spec:
   replicas: 10
   selector:
@@ -70,9 +73,23 @@ spec:
                 secretKeyRef:
                   name: {{.Values.name}}
                   key: DB_SSL_PATH_CERT
+            - name: REST_SERVER_PORT
+              value: "{{.Values.container.port}}"
+            - name: BST_CORE_COGNITO_CLIENT_ID
+              value: ""
+            - name: BST_CORE_FIREBASE_CLIENT_ID
+              value: ""
+            - name: BST_CORE_AZURE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: AZURE_CLIENT_ID
+            - name: AUTHENTICATOR_URL
+              value: "{{.Values.authenticator_url}}"
+
           livenessProbe:
             httpGet:
               path: /health_check
-              port: 8998
+              port: {{.Values.container.port}}
             initialDelaySeconds: 15
             periodSeconds: 10

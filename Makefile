@@ -92,13 +92,13 @@ compose_up: ## Start services
 
 create_migrations_mariadb:
 	docker-compose --profile mariadb up -d;
-	docker-compose run core-di-stats-handler-gen1 bash -c "cd solution/sp/sql_base/mariadb/ && alembic -n mariadb revision --autogenerate"
+	docker-compose run core-di-stats-handler-gen1 bash -c "cd solution/sp/sql_base/migrations/ && alembic -n mariadb revision --autogenerate"
 	docker-compose down
 	echo "Add newly created migrations to the repository: git add new_files..."
 
 create_migrations_mysql:
 	docker-compose --profile mysql up -d;
-	docker-compose run core-di-stats-handler-gen1 bash -c "cd solution/sp/sql_base/mysql/ && alembic -n mysql revision --autogenerate"
+	docker-compose run core-di-stats-handler-gen1 bash -c "cd solution/sp/sql_base/migrations/ && alembic -n mysql revision --autogenerate"
 	docker-compose down
 	echo "Add newly created migrations to the repository: git add new_files..."
 

@@ -1,5 +1,6 @@
 locals {
   name = "${var.env_prefix}-${var.name}"
+  service_name = "${var.env_prefix}-${var.name}-service"
 }
 
 terraform {
@@ -72,6 +73,22 @@ data "azurerm_key_vault_secret" "db_ssl_path_cert" {
   key_vault_id = data.azurerm_key_vault.db_secret.id
 }
 
+########################################################################################################################
+## Auth secret
+########################################################################################################################
+
+data "azurerm_key_vault" "auth_secret" {
+  name                = var.di_stats_auth_vault_name
+  resource_group_name = var.vault_resource_group
+}
+
+data "azurerm_key_vault_secret" "auth_client_id" {
+  name         = var.di_stats_auth_vault_client_id_key
+  key_vault_id = data.azurerm_key_vault.auth_secret.id
+}
+
+########################################################################################################################
+
 resource "helm_release" "stats_handler" {
   name  = local.name
   chart = "${path.module}/chart"
@@ -82,8 +99,23 @@ resource "helm_release" "stats_handler" {
   }
 
   set {
+    name  = "service_port"
+    value = var.port
+  }
+
+  set {
     name  = "container.image"
     value = var.service_image
+  }
+
+  set {
+    name = "azure_client_id"
+    value = data.azurerm_key_vault_secret.auth_client_id.value
+  }
+
+  set {
+    name = "authenticator_url"
+    value = var.authenticator_url
   }
 
   set {
@@ -114,5 +146,20 @@ resource "helm_release" "stats_handler" {
   set {
     name  = "db_ssl_path_cert"
     value = data.azurerm_key_vault_secret.db_ssl_path_cert.value
+  }
+
+  set {
+    name  = "maintainer_team"
+    value = var.maintainer_team
+  }
+
+  set {
+    name  = "maintainer_contact"
+    value = var.maintainer_contact
+  }
+
+  set {
+    name = "dns_name"
+    value = var.dns_name
   }
 }
