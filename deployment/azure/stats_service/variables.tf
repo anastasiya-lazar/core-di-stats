@@ -50,3 +50,39 @@ variable "db_user_pass_name" {
 variable "db_ssl_path_cert_name" {
   default = "dev-ssl-path"
 }
+
+
+########################################################################################
+
+variable "authenticator_url" {
+  default = "http://20.79.67.241/v1/generic_auth_jwt_verifier"
+}
+
+variable "dns_name" {
+  default = "stats-di.toronto-poc.xara.ai"
+}
+
+variable "port" {
+  description = "Port of the service"
+  default = "6786"
+}
+
+variable "kg_vault_endpoint_key_name" {
+  default = "dev-stats-di"
+}
+
+variable "maintainer_team" {
+  default = "Core-Quantum"
+}
+
+variable "maintainer_contact" {
+  default = "mihail.beliy@blackswan-technologies.com"
+}
+
+variable "di_stats_auth_vault_name" {
+  default = "di-stats-auth"
+}
+
+variable "di_stats_auth_vault_client_id_key" {
+  default = "azure-client-id"
+}

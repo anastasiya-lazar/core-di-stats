@@ -75,5 +75,5 @@ class DBClientSP(DBClientSPI):
             query = await session.execute(stmt)
             resp = query.scalars().first()
             if resp is None:
-                raise HTTPException(status_code=404, detail=f"Can not fund request by id {request_id}")
+                raise HTTPException(status_code=404, detail=f"Can not found request by id {request_id}")
         return StatusResponseSchema.from_orm(resp)

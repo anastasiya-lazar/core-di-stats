@@ -2,6 +2,14 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 name: &name core-di-gen1-stats-worker
+service_name: &service_name core-di-gen1-stats-worker-service
+maintainer_team:
+maintainer_contact:
+
+service_port: &service_port 6786
+
+azure_client_id:
+authenticator_url:
 
 db_type:
 db_endpoint:
@@ -18,9 +26,15 @@ metadata:
 container:
   name: *name
   image:
+  port: *service_port
 
+service:
+  port: *service_port
+  name: *service_name
 
 serviceName: DI_STATS_HANDLER
 dev: false
 debug: false
 log_level: debug
+dns_name:
+

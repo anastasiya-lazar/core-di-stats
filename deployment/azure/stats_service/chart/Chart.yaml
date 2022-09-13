@@ -1,6 +1,10 @@
 apiVersion: v2
 name: core-di-gen1-stats-worker
 description: A Helm chart for Kubernetes
+maintainers:
+  - name: "[Team] Core-Quantum"
+  - name: "[User] Mihail Beliy"
+    email: "mihail.beliy@blackswan-technologies.com"
 
 type: application
 
