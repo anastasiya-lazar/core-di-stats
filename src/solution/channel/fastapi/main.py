@@ -1,12 +1,16 @@
 import config as conf
 
+from bst_core.shared.logger import get_logger
+
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse
 
 from solution.channel.fastapi.controller import router
+
+logger = get_logger(__name__)
 
 
 app = FastAPI()
@@ -21,6 +25,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def not_found_exception_handler(_, exc: Exception):
+    logger.error(f"Error: {exc}")
+    return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        content={
+                            "code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            "is_error": True,
+                            "message": "An error occurred, please read service logs"
+                        },
+                        )
 
 
 @app.exception_handler(HTTPException)
