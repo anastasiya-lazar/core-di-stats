@@ -1,0 +1,7 @@
+[run]
+omit =
+    */tests/*
+    */main.py
+
+[xml]
+output = coverage-reports/coverage-report.xml

@@ -1,0 +1,41 @@
+version: '3.9'
+
+services:
+  test-app:
+    container_name: core-di-stats-handler-gen1-test
+    image: core-di-stats-handler-gen1-test
+    build:
+      dockerfile: Dockerfile
+      target: dev
+      context: .
+      args:
+        PIP_EXTRA_INDEX_URL: ${PIP_EXTRA_INDEX_URL}
+    command: "pytest --cov-config=./tests/.coveragerc --cov-report xml --cov-report term-missing --cov=./ ./tests/"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - "./src:/usr/src/app/"
+      - "./tests:/usr/src/app/tests"
+    environment:
+      DB_ENDPOINT: test-db
+      DB_TYPE: MARIADB
+      DB_NAME: test
+      DB_USERNAME: user
+      DB_PASSWORD: pass
+      DB_PORT: 3306
+    depends_on:
+      test-db:
+        condition: service_healthy
+
+  test-db:
+    image: mariadb:10.7
+    environment:
+      MARIADB_DATABASE: test
+      MARIADB_PASSWORD: pass
+      MARIADB_ROOT_PASSWORD: pass
+      MARIADB_ALLOW_EMPTY_PASSWORD: 1
+      MARIADB_USER: user
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u $$MARIADB_USER --password=$$MARIADB_PASSWORD
+      interval: 5s
+      timeout: 3s

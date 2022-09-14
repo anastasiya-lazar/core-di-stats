@@ -6,8 +6,7 @@ from solution.profile import profile
 class RestController(StatsController):
 
     async def ingest_data(self, payload: MediatorIngestionSchema) -> IngestDataResponse:
-        db_params = MediatorIngestionSchema(**payload.dict())
-        request_id = await profile.db_client.insert_new_request(db_params)
+        request_id = await profile.db_client.insert_new_request(payload)
         return IngestDataResponse(**{'request_id': request_id})
 
     async def get_status_by_request_id(self, request_id: str) -> StatusResponseSchema:
