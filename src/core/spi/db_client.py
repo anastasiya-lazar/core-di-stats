@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 
-from core.api.dtos import MediatorIngestionSchema, StatusResponseSchema
+from core.api.dtos import MediatorIngestionSchema, StatusResponseSchema, IngestDataResponse
 
 
 class DBClientSPI(ABC):
 
     @abstractmethod
-    def insert_new_request(self, payload: MediatorIngestionSchema):
+    def insert_new_request(self, payload: MediatorIngestionSchema) -> str:
         """
         Handle incoming requests from mediator to ingest data into the DB
         :param payload: request body
