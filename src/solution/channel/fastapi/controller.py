@@ -20,6 +20,6 @@ async def ingest_stats_data(payload: MediatorIngestionSchema):
 
 
 @router.get("/get-status/{request_id}", response_model=StatusResponseSchema)
-async def get_latest_schema_version(request_id: str):
+async def get_status_of_request(request_id: str):
     return await rest_controller.get_status_by_request_id(request_id)
 
