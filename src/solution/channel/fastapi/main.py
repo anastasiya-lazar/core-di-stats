@@ -51,7 +51,7 @@ async def http_exception_handler(_, exc: HTTPException):
     )
 
 
-@app.get("/health_check")
+@app.get("/health_check", tags=["utils"])
 async def health_check():
     return "Ok"
 

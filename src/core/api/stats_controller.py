@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from core.api.dtos import MediatorIngestionSchema, StatusResponseSchema, IngestDataResponse
+from core.api.dtos import IngestionParamsSchema, StatusResponseSchema, IngestProgressDataResponse
 
 
 class StatsController(ABC):
@@ -8,7 +8,7 @@ class StatsController(ABC):
     Base class for the stats handling
     """
     @abstractmethod
-    async def ingest_data(self, payload: MediatorIngestionSchema) -> IngestDataResponse:
+    async def ingest_data(self, payload: IngestionParamsSchema) -> IngestProgressDataResponse:
         """
         Handle incoming requests from mediator to ingest data into the DB
         :param payload: request body

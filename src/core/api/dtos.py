@@ -4,7 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class MediatorIngestionSchema(BaseModel):
+class IngestionParamsSchema(BaseModel):
     tenant_id: str
     app_id: str
     entity_type: str
@@ -30,5 +30,5 @@ class StatusResponseSchema(BaseModel):
         orm_mode = True
 
 
-class IngestDataResponse(BaseModel):
+class IngestProgressDataResponse(BaseModel):
     request_id: str
