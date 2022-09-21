@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
 from sqlalchemy.future import select
 from sqlalchemy.orm import sessionmaker
 
-from core.api.dtos import StatusResponseSchema, MediatorIngestionSchema
+from core.api.dtos import StatusResponseSchema, IngestionParamsSchema
 from core.spi.db_client import DBClientSPI
 from solution.sp.sql_base.models import IngestionRequestStatus, Base
 
@@ -55,7 +55,7 @@ class DBClientSP(DBClientSPI):
             await session.commit()
             return row_id
 
-    async def insert_new_request(self, payload: MediatorIngestionSchema) -> str:
+    async def insert_new_request(self, payload: IngestionParamsSchema) -> str:
         """
         Insert new request to the DB and return it ID
         :param payload: parameters of the request
