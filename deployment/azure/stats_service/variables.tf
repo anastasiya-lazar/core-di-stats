@@ -1,11 +1,11 @@
 variable "name" {
   description = "Name of the service, which is deployed (i.e. stats-handler)"
-  default = "stats-worker"
+  default = "stats-handler-gen1-srv"
 }
 
 variable "env_prefix" {
   description = "prefix of the environment"
-  default = "core-di-dev"
+  default = "core-di"
 }
 
 variable "service_image" {
@@ -51,15 +51,10 @@ variable "db_ssl_path_cert_name" {
   default = "dev-ssl-path"
 }
 
-
 ########################################################################################
 
-variable "authenticator_url" {
-  default = "http://20.79.67.241/v1/generic_auth_jwt_verifier"
-}
-
 variable "dns_name" {
-  default = "stats-di.toronto-poc.xara.ai"
+  default = "di-stats-handler.toronto-poc.xara.ai"
 }
 
 variable "port" {
@@ -85,4 +80,8 @@ variable "di_stats_auth_vault_name" {
 
 variable "di_stats_auth_vault_client_id_key" {
   default = "azure-client-id"
+}
+
+variable "di_stats_auth_vault_authenticator_url" {
+  default = "authenticator-url"
 }

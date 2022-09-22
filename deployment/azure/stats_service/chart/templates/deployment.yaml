@@ -6,7 +6,7 @@ metadata:
     maintainer.team: {{.Values.maintainer_team}}
     maintainer.contact: {{.Values.maintainer_contact}}
 spec:
-  replicas: 10
+  replicas: 1
   selector:
     matchLabels:
       app: {{.Values.metadata.name}}
@@ -85,7 +85,10 @@ spec:
                   name: {{.Values.name}}
                   key: AZURE_CLIENT_ID
             - name: AUTHENTICATOR_URL
-              value: "{{.Values.authenticator_url}}"
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.name}}
+                  key: AUTHENTICATOR_URL
 
           livenessProbe:
             httpGet:
