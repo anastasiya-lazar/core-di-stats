@@ -1,5 +1,5 @@
 apiVersion: v2
-name: core-di-gen1-stats-worker
+name: core-di-stats-handler-gen1-srv
 description: A Helm chart for Kubernetes
 maintainers:
   - name: "[Team] Core-Quantum"

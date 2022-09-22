@@ -14,10 +14,8 @@ ENV_FILE?=$(WORKDIR)/.env
 include $(ENV_FILE)
 export $(cut -d= -f1 $(ENV_FILE) | grep -v -e "#")
 
-HELM_EXPERIMENTAL_OCI=1
-
 VERSION?=0.0.1_build$(shell date +%s )
-NAME?=core-di-gen1-stats-handler
+NAME?=core-di-stats-handler-gen1-srv
 
 # Azure deployment
 CLUSTER?=toronto-backend-cluster

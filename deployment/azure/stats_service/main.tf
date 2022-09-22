@@ -87,6 +87,11 @@ data "azurerm_key_vault_secret" "auth_client_id" {
   key_vault_id = data.azurerm_key_vault.auth_secret.id
 }
 
+data "azurerm_key_vault_secret" "authenticator_url" {
+  name         = var.di_stats_auth_vault_authenticator_url
+  key_vault_id = data.azurerm_key_vault.auth_secret.id
+}
+
 ########################################################################################################################
 
 resource "helm_release" "stats_handler" {
@@ -115,7 +120,7 @@ resource "helm_release" "stats_handler" {
 
   set {
     name = "authenticator_url"
-    value = var.authenticator_url
+    value = data.azurerm_key_vault_secret.authenticator_url.value
   }
 
   set {
