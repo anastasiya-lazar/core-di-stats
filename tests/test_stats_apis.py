@@ -24,6 +24,7 @@ class StatsTestCase(TestCase):
             "src_type": "test_src_type",
             "is_batch_required": True,
             "batch_size": 0,
+            "subscriber_name": ["test_subscriber_name", "test_subscriber_name_2"],
             "enrich_oncreation": True
         })
         print(response.json())
@@ -34,6 +35,7 @@ class StatsTestCase(TestCase):
         response = self._client.get(f"/v1/core-di-stats/get-status/{request_id}")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json().get("app_id"), "test_app_id")
+        self.assertEqual(response.json().get("subscriber_name"), ["test_subscriber_name", "test_subscriber_name_2"])
 
     def test_get_status_by_invalid_request_id(self, *_):
         """ Test get status with invalid request_id """
@@ -55,7 +57,8 @@ class StatsTestCase(TestCase):
             "entity_type": "string",
             "src_type": "string",
             "is_batch_required": True,
-            "batch_size": 0
+            "batch_size": 0,
+            "subscriber_name": ["test_subscriber_name", "test_subscriber_name_2"],
         })
 
         self.assertNotEqual(response.status_code, 201)
