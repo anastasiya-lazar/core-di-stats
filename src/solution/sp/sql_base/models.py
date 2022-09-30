@@ -3,7 +3,7 @@ from enum import Enum
 from uuid import uuid4
 
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String, func, )
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String, func, JSON)
 
 Base = declarative_base()
 
@@ -25,6 +25,7 @@ class IngestionRequestStatus(Base):
     src_type = Column(String(80))
     is_batch_required = Column(Boolean)
     batch_size = Column(Integer)
+    subscriber_name = Column(JSON)
     enrich_oncreation = Column(Boolean)
     status = Column(String(80), default=RequestStatusEnum.STARTED.value)
     start_time = Column(DateTime, default=lambda: datetime.now(), )
