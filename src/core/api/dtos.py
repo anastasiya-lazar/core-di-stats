@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel
 
@@ -11,6 +11,7 @@ class IngestionParamsSchema(BaseModel):
     src_type: str
     is_batch_required: bool
     batch_size: int
+    subscriber_name: List[str] = []
     enrich_oncreation: bool
 
 
@@ -21,6 +22,7 @@ class StatusResponseSchema(BaseModel):
     src_type: str
     is_batch_required: bool
     batch_size: int
+    subscriber_name: List[str] = []
     enrich_oncreation: bool
     status: str
     start_time: datetime
