@@ -90,6 +90,8 @@ spec:
                   name: {{.Values.name}}
                   key: AUTHENTICATOR_URL
 
+          ports:
+            - containerPort: {{.Values.container.port}}
           livenessProbe:
             httpGet:
               path: /health_check
