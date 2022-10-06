@@ -44,3 +44,8 @@ db_driver = DB_DRIVERS[DB_TYPE]
 REQUEST_DB_CONNECTION_STRING = f"{db_driver}+asyncmy://{DB_USERNAME}:{DB_PASSWORD}@{DB_ENDPOINT}:{DB_PORT}/{DB_NAME}"
 
 AUTHENTICATOR_URL = os.environ.get("AUTHENTICATOR_URL")
+
+# Keep the URL empty to use ConsoleSpanExporter or set http://otel-collector:4317 for local OTLPSpanExporter
+OTEL_COLLECTOR_URL = os.environ.get('OTEL_COLLECTOR_URL')
+
+OTEL_CONTEXT_NAME = b'OTEL-CONTEXT'

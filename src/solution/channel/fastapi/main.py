@@ -9,6 +9,7 @@ from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse
 
 from solution.channel.fastapi.controller import router
+from solution.channel.open_telemetry import config_open_telemetry
 
 logger = get_logger(__name__)
 
@@ -57,6 +58,7 @@ async def health_check():
 
 
 if __name__ == '__main__':
+    config_open_telemetry()
     uvicorn.run(
         app='solution.channel.fastapi.main:app',
         host=conf.REST_SERVER_HOST,
