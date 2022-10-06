@@ -11,7 +11,7 @@ from opentelemetry.sdk.trace.export import (BatchSpanProcessor,
 logger = get_logger(__name__, LOGGER_LEVEL)
 
 
-async def config_open_telemetry():
+def config_open_telemetry():
     logger.info("Configure open telemetry")
 
     resource = Resource(attributes={
