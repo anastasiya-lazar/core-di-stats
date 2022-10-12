@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from bst_core.shared.logger import get_logger
 
 from core.api.dtos import (IngestionParamsSchema, StatusResponseSchema, IngestProgressDataResponse,
-                           CreateIngestionStatusSchema, CreateIngestionStatusResponse)
+                           CreateIngestionStatusSchema, CreateIngestionStatusResponse, UpdateIngestionStatusSchema)
 from core.impl.rest_controller import RestController
 from solution.channel.fastapi.auth_controller import AuthTokenApiKey
 
@@ -32,3 +32,10 @@ async def get_status_of_request(request_id: str):
 async def create_ingestion_status(payload: CreateIngestionStatusSchema):
     """Creates a new record in the database with the provided data. Returns the ID of the created record."""
     return await rest_controller.create_ingestion_status(payload)
+
+
+@router.patch("/update-ingestion-status/{ingestion_id}", status_code=200, tags=["ingestion-status"])
+async def update_ingestion_status(ingestion_id: int, payload: UpdateIngestionStatusSchema):
+    """Updates the record by id with the provided data."""
+    await rest_controller.update_ingestion_status(ingestion_id, payload)
+    return {"message": "Ingestion status is updated successfully"}
