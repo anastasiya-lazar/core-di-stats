@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from core.api.dtos import (IngestionParamsSchema, StatusResponseSchema, IngestProgressDataResponse,
-                           CreateIngestionStatusSchema, CreateIngestionStatusResponse)
+                           CreateIngestionStatusSchema, CreateIngestionStatusResponse, UpdateIngestionStatusSchema)
 
 
 class StatsController(ABC):
@@ -28,5 +28,13 @@ class StatsController(ABC):
     async def create_ingestion_status(self, payload: CreateIngestionStatusSchema) -> CreateIngestionStatusResponse:
         """
         Create ingestion status
+        :param payload: request body
+        """
+
+    @abstractmethod
+    async def update_ingestion_status(self, ingestion_id: int, payload: UpdateIngestionStatusSchema):
+        """
+        Update ingestion status
+        :param ingestion_id: ingestion status record id
         :param payload: request body
         """
