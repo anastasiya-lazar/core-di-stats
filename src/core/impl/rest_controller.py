@@ -3,7 +3,8 @@ from fastapi import Request
 from opentelemetry import trace
 from opentelemetry.propagate import extract, inject
 
-from core.api.dtos import IngestionParamsSchema, StatusResponseSchema, IngestProgressDataResponse
+from core.api.dtos import (IngestionParamsSchema, StatusResponseSchema, IngestProgressDataResponse,
+                           CreateIngestionStatusSchema, CreateIngestionStatusResponse)
 from core.api.stats_controller import StatsController
 from solution.profile import profile
 
@@ -22,7 +23,7 @@ class RestController(StatsController):
             with tracer.start_as_current_span('insert_new_request') as insert:
                 request_id = await profile.db_client.insert_new_request(payload)
                 insert.set_attribute('request_id', request_id)
-                return IngestProgressDataResponse(**{'request_id': request_id})
+                return IngestProgressDataResponse(request_id=request_id)
 
     async def get_status_by_request_id(self, request_id: str) -> StatusResponseSchema:
         """
@@ -32,3 +33,13 @@ class RestController(StatsController):
                                           attributes={'endpoint': f'/get-status/{request_id}'}) as root:
             root.set_attribute('request_id', request_id)
             return await profile.db_client.get_request_status(request_id)
+
+    async def create_ingestion_status(self, payload: CreateIngestionStatusSchema) -> CreateIngestionStatusResponse:
+        """
+        Create ingestion status
+        """
+        with tracer.start_as_current_span('create_ingestion_status',
+                                          attributes={'endpoint': '/create-ingestion-status'}) as root:
+            root.set_attribute('request_body', json.dumps(payload.dict()))
+            ingestion_id = await profile.db_client.db_create_ingestion_status(payload)
+            return CreateIngestionStatusResponse(id=ingestion_id)

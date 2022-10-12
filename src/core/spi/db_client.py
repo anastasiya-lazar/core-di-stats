@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from core.api.dtos import IngestionParamsSchema, StatusResponseSchema
+from core.api.dtos import IngestionParamsSchema, StatusResponseSchema, CreateIngestionStatusSchema
 
 
 class DBClientSPI(ABC):
@@ -18,4 +18,11 @@ class DBClientSPI(ABC):
         """
         Get status of request
         :param request_id:
+        """
+
+    @abstractmethod
+    def db_create_ingestion_status(self, payload: CreateIngestionStatusSchema) -> int:
+        """
+        Create ingestion status
+        :param payload: request body
         """

@@ -15,6 +15,13 @@ class RequestStatusEnum(Enum):
     FAILED = "Failed"
 
 
+class IngestionStatusEnum(Enum):
+    PENDING = "Pending"
+    RUNNING = "Running"
+    COMPLETED = "Completed"
+    FAILED = "Failed"
+
+
 class IngestionRequestStatus(Base):
     __tablename__ = "ingestion_request_status"
 
@@ -68,7 +75,7 @@ class IngestionStatus(Base):
     source_id = Column(String(128))
     file_uri = Column(String(256))
     entity_type = Column(String(80))
-    status = Column(String(80))
+    status = Column(String(80), default=IngestionStatusEnum.RUNNING.value)
     is_error = Column(Boolean)
     message = Column(String(256))
     total_record_count = Column(Integer, default=0)

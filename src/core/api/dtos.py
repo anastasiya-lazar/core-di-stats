@@ -34,3 +34,20 @@ class StatusResponseSchema(BaseModel):
 
 class IngestProgressDataResponse(BaseModel):
     request_id: str
+
+
+class CreateIngestionStatusSchema(BaseModel):
+    request_id: str
+    source_id: str
+    file_uri: str
+    entity_type: str
+    is_error: bool
+    message: str
+    total_record_count: int
+    total_failed_count: int
+    total_success_count: int
+    source_queue_name: str
+
+
+class CreateIngestionStatusResponse(BaseModel):
+    id: int
