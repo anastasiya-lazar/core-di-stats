@@ -147,5 +147,5 @@ build_and_deploy: ## Build and Deploy
 build_and_deploy: aks_login build deploy_service
 
 run_tests: ## Run test
-	docker-compose -f ./docker-compose.test.yml up test-app
-	docker-compose -f ./docker-compose.test.yml down -v
+	docker-compose -f ./docker-compose.test.yml up --build test-app
+	docker-compose -f ./docker-compose.test.yml down -v --remove-orphans
