@@ -3,7 +3,7 @@ from enum import Enum
 from uuid import uuid4
 
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String, func, JSON)
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String, func, JSON, UniqueConstraint)
 
 Base = declarative_base()
 
@@ -83,3 +83,7 @@ class IngestionStatus(Base):
     total_success_count = Column(Integer, default=0)
     source_queue_name = Column(String(256))
     last_stat_updated = Column(DateTime(), onupdate=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("request_id", "source_id", name="request_source_uc"),
+    )

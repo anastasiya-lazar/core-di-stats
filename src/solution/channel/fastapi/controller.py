@@ -34,8 +34,8 @@ async def create_ingestion_status(payload: CreateIngestionStatusSchema):
     return await rest_controller.create_ingestion_status(payload)
 
 
-@router.patch("/update-ingestion-status/{ingestion_id}", status_code=200, tags=["ingestion-status"])
-async def update_ingestion_status(ingestion_id: int, payload: UpdateIngestionStatusSchema):
+@router.patch("/update-ingestion-status/{request_id}/{source_id}", status_code=200, tags=["ingestion-status"])
+async def update_ingestion_status(request_id: str, source_id: str, payload: UpdateIngestionStatusSchema):
     """Updates the record by id with the provided data."""
-    await rest_controller.update_ingestion_status(ingestion_id, payload)
+    await rest_controller.update_ingestion_status(request_id, source_id, payload)
     return {"message": "Ingestion status is updated successfully"}

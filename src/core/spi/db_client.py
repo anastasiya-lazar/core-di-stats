@@ -29,9 +29,10 @@ class DBClientSPI(ABC):
         """
 
     @abstractmethod
-    def db_update_ingestion_status(self, ingestion_id: int, payload: UpdateIngestionStatusSchema):
+    def db_update_ingestion_status(self, request_id: str, source_id: str, payload: UpdateIngestionStatusSchema):
         """
         Update ingestion status
-        :param ingestion_id: ingestion status record id
+        :param request_id: request id
+        :param source_id: source id
         :param payload: request body
         """
