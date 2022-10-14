@@ -62,19 +62,19 @@ class DBClientSP(DBClientSPI):
                 return row_id
         except IntegrityError as e:
             if "Duplicate entry" in e.orig.args[1]:
-                raise DuplicationException(e.orig.args[1])
+                raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=e.orig.args[1])
             elif "Cannot add or update a child row: a foreign key constraint fails" in e.orig.args[1]:
                 raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=e.orig.args[1])
             raise e
 
-    async def _update_with_given_payload(self, table, record_id, payload):
-        async with self.session() as session:
-            stmt = update(table).where(table.id == record_id).values(**payload)
-            ex = await session.execute(stmt)
-            await session.commit()
-            if ex.rowcount != 1:
-                logger.error(f"Can not update {table.__name__} with id {record_id} with payload {payload}")
-                raise HTTPException(status_code=404, detail=f"Can not found {table.__name__} by id {record_id}")
+    @staticmethod
+    async def _update_with_given_payload(session, table, record_id, payload):
+        stmt = update(table).where(table.id == record_id).values(**payload)
+        ex = await session.execute(stmt)
+        await session.commit()
+        if ex.rowcount != 1:
+            logger.error(f"Can not update {table.__name__} with id {record_id} with payload {payload}")
+            raise HTTPException(status_code=404, detail=f"Can not found {table.__name__} by id {record_id}")
 
     @staticmethod
     async def _update_related_table_to_failed(session, record_id, from_table, to_table,
@@ -86,13 +86,24 @@ class DBClientSP(DBClientSPI):
         :param from_table: table with the record
         :param to_table: table with the related record
         """
-        srmt = select(from_table).where(from_table.id == record_id)
-        query = await session.execute(srmt)
+        stmt = select(from_table).where(from_table.id == record_id)
+        query = await session.execute(stmt)
         related_record_id = getattr(query.scalars().first(), id_field_name)
         stmt1 = update(to_table).where(to_table.id == related_record_id).values(
             {"status": enum_value})
         await session.execute(stmt1)
         return related_record_id
+
+    @staticmethod
+    async def _get_ingestion_status_by_request_id_and_source_id(session, request_id: str, source_id: str):
+        stmt = select(IngestionStatus).where(IngestionStatus.request_id == request_id,
+                                             IngestionStatus.source_id == source_id)
+        query = await session.execute(stmt)
+        ingestion = query.scalars().first()
+        if ingestion is None:
+            raise HTTPException(status_code=404, detail=f"Can not found ingestion by request id {request_id} "
+                                                        f"and source id {source_id}")
+        return ingestion
 
     async def insert_new_request(self, payload: IngestionParamsSchema) -> str:
         """
@@ -125,16 +136,27 @@ class DBClientSP(DBClientSPI):
         request = IngestionStatus(**payload.dict())
         return await self._insert(request)
 
-    async def db_update_ingestion_status(self, ingestion_id: int, payload: UpdateIngestionStatusSchema):
+    async def db_update_ingestion_status(self, request_id: str, source_id: str, payload: UpdateIngestionStatusSchema):
         """
         Update ingestion status
-        :param ingestion_id: ingestion status record id
-        :param payload: request body
+        :param request_id:
+        :param source_id:
+        :param payload:
         """
         if payload.status == IngestionStatusEnum.FAILED.value:
             async with self.session() as session:
+                ingestion = await self._get_ingestion_status_by_request_id_and_source_id(session, request_id, source_id)
+                ingestion_id = ingestion.id
                 await self._update_related_table_to_failed(session, ingestion_id, IngestionStatus,
                                                            IngestionRequestStatus, RequestStatusEnum.FAILED.value,
                                                            "request_id")
-                await session.commit()
-        await self._update_with_given_payload(IngestionStatus, ingestion_id, payload.dict(exclude_unset=True))
+                await self._update_with_given_payload(session, IngestionStatus, ingestion_id, payload.dict(
+                    exclude_unset=True))
+
+        else:
+            async with self.session() as session:
+                ingestion = await self._get_ingestion_status_by_request_id_and_source_id(session, request_id, source_id)
+                ingestion_id = ingestion.id
+
+                await self._update_with_given_payload(session, IngestionStatus, ingestion_id, payload.dict(
+                    exclude_unset=True))
