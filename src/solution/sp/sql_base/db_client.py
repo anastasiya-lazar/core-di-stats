@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from starlette.status import HTTP_400_BAD_REQUEST
 
 from core.api.dtos import (StatusResponseSchema, IngestionParamsSchema, CreateIngestionStatusSchema,
-                           UpdateIngestionStatusSchema)
+                           UpdateIngestionStatusSchema, GetIngestionStatusSchema)
 from core.spi.db_client import DBClientSPI
 from solution.sp.sql_base.models import (IngestionRequestStatus, Base, IngestionStatus, RequestStatusEnum,
                                          IngestionStatusEnum)
@@ -160,3 +160,14 @@ class DBClientSP(DBClientSPI):
 
                 await self._update_with_given_payload(session, IngestionStatus, ingestion_id, payload.dict(
                     exclude_unset=True))
+
+    async def db_get_ingestion_status(self, request_id: str, source_id: str) -> GetIngestionStatusSchema:
+        """
+        Get ingestion status
+        :param request_id:
+        :param source_id:
+        """
+        async with self.session() as session:
+            ingestion = await self._get_ingestion_status_by_request_id_and_source_id(session, request_id, source_id)
+            return GetIngestionStatusSchema.from_orm(ingestion)
+

@@ -70,3 +70,22 @@ class UpdateIngestionStatusSchema(BaseModel):
         orm_mode = True
         use_enum_values = True
 
+
+class GetIngestionStatusSchema(BaseModel):
+    id: int
+    request_id: str
+    source_id: str
+    file_uri: str
+    entity_type: str
+    status: IngestionStatusEnum = IngestionStatusEnum.RUNNING
+    is_error: bool
+    message: str
+    total_record_count: int
+    total_failed_count: int
+    total_success_count: int
+    source_queue_name: str
+    last_stat_updated: Optional[datetime]
+
+    class Config:
+        orm_mode = True
+        use_enum_values = True

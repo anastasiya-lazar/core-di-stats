@@ -3,7 +3,8 @@ from fastapi import APIRouter, Depends
 from bst_core.shared.logger import get_logger
 
 from core.api.dtos import (IngestionParamsSchema, StatusResponseSchema, IngestProgressDataResponse,
-                           CreateIngestionStatusSchema, CreateIngestionStatusResponse, UpdateIngestionStatusSchema)
+                           CreateIngestionStatusSchema, CreateIngestionStatusResponse, UpdateIngestionStatusSchema,
+                           GetIngestionStatusSchema)
 from core.impl.rest_controller import RestController
 from solution.channel.fastapi.auth_controller import AuthTokenApiKey
 
@@ -39,3 +40,10 @@ async def update_ingestion_status(request_id: str, source_id: str, payload: Upda
     """Updates the record by id with the provided data."""
     await rest_controller.update_ingestion_status(request_id, source_id, payload)
     return {"message": "Ingestion status is updated successfully"}
+
+
+@router.get("/get-ingestion-status/{request_id}/{source_id}", response_model=GetIngestionStatusSchema,
+            tags=["ingestion-status"])
+async def get_ingestion_status(request_id: str, source_id: str):
+    """Returns the status of the request with the provided ID."""
+    return await rest_controller.get_ingestion_status(request_id, source_id)
