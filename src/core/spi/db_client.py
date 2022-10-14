@@ -36,3 +36,11 @@ class DBClientSPI(ABC):
         :param source_id: source id
         :param payload: request body
         """
+
+    @abstractmethod
+    def db_get_ingestion_status(self, request_id: str, source_id: str):
+        """
+        Get ingestion status
+        :param request_id: request id
+        :param source_id: source id
+        """

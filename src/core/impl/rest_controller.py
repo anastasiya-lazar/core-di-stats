@@ -4,7 +4,8 @@ from opentelemetry import trace
 from opentelemetry.propagate import extract, inject
 
 from core.api.dtos import (IngestionParamsSchema, StatusResponseSchema, IngestProgressDataResponse,
-                           CreateIngestionStatusSchema, CreateIngestionStatusResponse, UpdateIngestionStatusSchema)
+                           CreateIngestionStatusSchema, CreateIngestionStatusResponse, UpdateIngestionStatusSchema,
+                           GetIngestionStatusSchema)
 from core.api.stats_controller import StatsController
 from solution.profile import profile
 
@@ -52,4 +53,15 @@ class RestController(StatsController):
                                           attributes={'endpoint': f'/update-ingestion-status/{request_id}/{source_id}'}) as root:
             root.set_attribute('request_body', json.dumps(payload.dict()))
             return await profile.db_client.db_update_ingestion_status(request_id, source_id, payload)
+
+    async def get_ingestion_status(self, request_id: str, source_id: str) -> GetIngestionStatusSchema:
+        """
+        Get ingestion status
+        """
+        with tracer.start_as_current_span('get_ingestion_status',
+                                          attributes={
+                                              'endpoint': f'/get-ingestion-status/{request_id}/{source_id}'}) as root:
+            root.set_attribute('request_id', request_id)
+            root.set_attribute('source_id', source_id)
+            return await profile.db_client.db_get_ingestion_status(request_id, source_id)
 
