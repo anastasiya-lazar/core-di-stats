@@ -53,7 +53,7 @@ class CreateIngestionStatusSchema(BaseModel):
 
 
 class CreateIngestionStatusResponse(BaseModel):
-    id: int
+    creation_status: str
 
 
 class UpdateIngestionStatusSchema(BaseModel):
@@ -72,7 +72,6 @@ class UpdateIngestionStatusSchema(BaseModel):
 
 
 class GetIngestionStatusSchema(BaseModel):
-    id: int
     request_id: str
     source_id: str
     file_uri: str
