@@ -22,7 +22,7 @@ class DBClientSPI(ABC):
         """
 
     @abstractmethod
-    def db_create_ingestion_status(self, payload: CreateIngestionStatusSchema) -> int:
+    def db_create_ingestion_status(self, payload: CreateIngestionStatusSchema) -> str:
         """
         Create ingestion status
         :param payload: request body

@@ -70,9 +70,8 @@ class SubscriberIngestionStatus(Base):
 class IngestionStatus(Base):
     __tablename__ = "ingestion_status"
 
-    id = Column(Integer, primary_key=True)
-    request_id = Column(String(128), ForeignKey("ingestion_request_status.id"))
-    source_id = Column(String(128))
+    request_id = Column(String(128), ForeignKey("ingestion_request_status.id"), primary_key=True)
+    source_id = Column(String(128), primary_key=True)
     file_uri = Column(String(256))
     entity_type = Column(String(80))
     status = Column(String(80), default=IngestionStatusEnum.RUNNING.value)

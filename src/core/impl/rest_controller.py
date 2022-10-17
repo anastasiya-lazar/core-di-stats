@@ -42,8 +42,8 @@ class RestController(StatsController):
         with tracer.start_as_current_span('create_ingestion_status',
                                           attributes={'endpoint': '/create-ingestion-status'}) as root:
             root.set_attribute('request_body', json.dumps(payload.dict()))
-            ingestion_id = await profile.db_client.db_create_ingestion_status(payload)
-            return CreateIngestionStatusResponse(id=ingestion_id)
+            creation_status = await profile.db_client.db_create_ingestion_status(payload)
+            return CreateIngestionStatusResponse(creation_status=creation_status)
 
     async def update_ingestion_status(self, request_id: str, source_id: str, payload: UpdateIngestionStatusSchema):
         """
