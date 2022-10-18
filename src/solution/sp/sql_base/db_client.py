@@ -8,15 +8,15 @@ from sqlalchemy import update, func
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
                                     create_async_engine)
 from sqlalchemy.future import select
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy.exc import IntegrityError
 from starlette.status import HTTP_400_BAD_REQUEST
 
 from core.api.dtos import (StatusResponseSchema, IngestionParamsSchema, CreateIngestionStatusSchema,
-                           UpdateIngestionStatusSchema, GetIngestionStatusSchema)
+                           UpdateIngestionStatusSchema, GetIngestionStatusSchema, FilterParams)
 from core.spi.db_client import DBClientSPI
 from solution.sp.sql_base.models import (IngestionRequestStatus, Base, IngestionStatus, RequestStatusEnum,
-                                         IngestionStatusEnum)
+                                         IngestionStatusEnum, IngestionRequestFilter)
 
 logger = get_logger(__name__)
 
@@ -52,13 +52,17 @@ class DBClientSP(DBClientSPI):
             args['ssl'] = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH, capath=conf.DB_SSL_PATH_CERT)
         return args
 
-    async def _insert(self, row: Base, ingestion_status: bool = False):
+    async def _insert(self, row: Base, filters=None, ingestion_status: bool = False):
         try:
             async with self.session() as session:
                 session.add(row)
                 await session.flush()
                 if not ingestion_status:
                     row_id = row.id
+                    if filters:
+                        session.add_all(
+                            [IngestionRequestFilter.from_request_param(FilterParams(**f), row_id) for f in filters]
+                        )
                 await session.commit()
                 if not ingestion_status:
                     return row_id
@@ -101,23 +105,28 @@ class DBClientSP(DBClientSPI):
                                                         f"and source id {source_id}")
         return ingestion
 
-    async def insert_new_request(self, payload: IngestionParamsSchema) -> str:
+    async def db_insert_new_request(self, payload: IngestionParamsSchema) -> str:
         """
         Insert new request to the DB and return it ID
         :param payload: parameters of the request
         :return: id of the DB record
         """
+        dict_payload = payload.dict()
+        filters = dict_payload.pop('filters', [])
+        request_status = IngestionRequestStatus(**dict_payload)
 
-        request = IngestionRequestStatus(**payload.dict())
-        return await self._insert(request)
+        return await self._insert(request_status, filters)
 
-    async def get_request_status(self, request_id: str) -> StatusResponseSchema:
+    async def db_get_request_status(self, request_id: str) -> StatusResponseSchema:
         """
         Get status of request
         :param request_id:
         """
         async with self.session() as session:
-            stmt = select(IngestionRequestStatus).where(IngestionRequestStatus.id == request_id)
+            stmt = select(IngestionRequestStatus).options(joinedload(
+                IngestionRequestStatus.ingestion_statuses), joinedload(
+                IngestionRequestStatus.subscriber_ingestion_statuses
+            )).where(IngestionRequestStatus.id == request_id)
             query = await session.execute(stmt)
             resp = query.scalars().first()
             if resp is None:
