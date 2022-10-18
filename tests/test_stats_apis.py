@@ -145,7 +145,6 @@ class StatsTestCase(TestCase):
         })
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("id", response.json())
 
         """Test duplicate ingestion status"""
         response = self._client.post(request_url, json={
