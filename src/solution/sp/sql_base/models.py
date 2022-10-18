@@ -1,11 +1,23 @@
 from datetime import datetime
 from enum import Enum
+from typing import Literal
 from uuid import uuid4
 
-from sqlalchemy.orm import declarative_base
+from pydantic import BaseModel
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String, func, JSON, UniqueConstraint)
 
 Base = declarative_base()
+
+
+class FilterCondition(BaseModel):
+    match: Literal['exact', 'contains', 'startsWith', 'endsWith', 'larger', 'smaller']
+
+
+class FilterParams(BaseModel):
+    attribute_name: str
+    value: str
+    condition: FilterCondition = FilterCondition(match='exact')
 
 
 class RequestStatusEnum(Enum):
@@ -22,23 +34,6 @@ class IngestionStatusEnum(Enum):
     FAILED = "Failed"
 
 
-class IngestionRequestStatus(Base):
-    __tablename__ = "ingestion_request_status"
-
-    id = Column(String(128), primary_key=True, default=lambda: uuid4().hex)
-    tenant_id = Column(String(80))
-    app_id = Column(String(80))
-    entity_type = Column(String(80))
-    src_type = Column(String(80))
-    is_batch_required = Column(Boolean)
-    batch_size = Column(Integer)
-    subscriber_name = Column(JSON)
-    enrich_oncreation = Column(Boolean)
-    status = Column(String(80), default=RequestStatusEnum.STARTED.value)
-    start_time = Column(DateTime, default=lambda: datetime.now(), )
-    end_time = Column(DateTime, default=None)
-
-
 class IngestionRequestFilter(Base):
     __tablename__ = "ingestion_request_filter"
 
@@ -46,7 +41,16 @@ class IngestionRequestFilter(Base):
     request_id = Column(String(128), ForeignKey("ingestion_request_status.id"))
     attribute = Column(String(80))
     value = Column(String(256))
-    condition = Column(Boolean)
+    condition = Column(String(64))
+
+    @classmethod
+    def from_request_param(cls, param: FilterParams, request_id: str):
+        return cls(
+            request_id=request_id,
+            attribute_name=param.attribute_name,
+            value=param.value,
+            condition=param.condition.match
+        )
 
 
 class SubscriberIngestionStatus(Base):
@@ -86,3 +90,28 @@ class IngestionStatus(Base):
     __table_args__ = (
         UniqueConstraint("request_id", "source_id", name="request_source_uc"),
     )
+
+
+class IngestionRequestStatus(Base):
+    __tablename__ = "ingestion_request_status"
+
+    id = Column(String(128), primary_key=True, default=lambda: uuid4().hex)
+    tenant_id = Column(String(80))
+    app_id = Column(String(80))
+    entity_type = Column(String(80))
+    src_type = Column(String(80))
+    is_batch_required = Column(Boolean)
+    batch_size = Column(Integer)
+    subscriber_name = Column(JSON)
+    enrich_oncreation = Column(Boolean)
+    status = Column(String(80), default=RequestStatusEnum.STARTED.value)
+    start_time = Column(DateTime, default=lambda: datetime.now(), )
+    end_time = Column(DateTime, default=None)
+    ingestion_statuses = relationship(IngestionStatus,
+                                      primaryjoin="IngestionRequestStatus.id==IngestionStatus.request_id",
+                                      lazy="joined")
+    subscriber_ingestion_statuses = relationship(
+        SubscriberIngestionStatus,
+        primaryjoin="IngestionRequestStatus.id==SubscriberIngestionStatus.request_id", lazy="joined")
+    filters = relationship(IngestionRequestFilter,
+                           primaryjoin="IngestionRequestStatus.id==IngestionRequestFilter.request_id", lazy="joined")

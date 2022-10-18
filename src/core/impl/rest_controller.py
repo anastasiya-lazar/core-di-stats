@@ -22,7 +22,7 @@ class RestController(StatsController):
                                           attributes={'endpoint': '/ingest_data'}) as root:
             root.set_attribute('request_body', json.dumps(payload.dict()))
             with tracer.start_as_current_span('insert_new_request') as insert:
-                request_id = await profile.db_client.insert_new_request(payload)
+                request_id = await profile.db_client.db_insert_new_request(payload)
                 insert.set_attribute('request_id', request_id)
                 return IngestProgressDataResponse(request_id=request_id)
 
@@ -33,7 +33,7 @@ class RestController(StatsController):
         with tracer.start_as_current_span('get_status_by_request_id',
                                           attributes={'endpoint': f'/get-status/{request_id}'}) as root:
             root.set_attribute('request_id', request_id)
-            return await profile.db_client.get_request_status(request_id)
+            return await profile.db_client.db_get_request_status(request_id)
 
     async def create_ingestion_status(self, payload: CreateIngestionStatusSchema) -> CreateIngestionStatusResponse:
         """
