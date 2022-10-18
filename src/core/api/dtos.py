@@ -40,14 +40,14 @@ class CreateIngestionStatusResponse(BaseModel):
 
 
 class UpdateIngestionStatusSchema(BaseModel):
-    file_uri: str
-    entity_type: str
-    status: IngestionStatusEnum = IngestionStatusEnum.RUNNING
-    is_error: bool
-    message: str
-    total_record_count: int
-    total_failed_count: int
-    total_success_count: int
+    file_uri: Optional[str]
+    entity_type: Optional[str]
+    status: Optional[IngestionStatusEnum] = IngestionStatusEnum.RUNNING
+    is_error: Optional[bool]
+    message: Optional[str]
+    total_record_count: Optional[int]
+    total_failed_count: Optional[int]
+    total_success_count: Optional[int]
 
     class Config:
         orm_mode = True
