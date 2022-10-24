@@ -21,7 +21,7 @@ DB_ENDPOINT = os.environ.get("DB_ENDPOINT", "")
 DB_PORT = os.environ.get("DB_PORT", "3306")
 DB_USERNAME = os.environ.get("DB_USERNAME", "")
 DB_USER_HOST = os.environ.get("DB_USER_HOST", "")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
 DB_NAME = os.environ.get("DB_NAME", "")
 
 if DB_USER_HOST:

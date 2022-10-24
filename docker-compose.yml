@@ -12,7 +12,7 @@ services:
       context: .
       args:
         PIP_EXTRA_INDEX_URL: ${PIP_EXTRA_INDEX_URL}
-    command: ["ipython", "solution/channel/fastapi/main.py"]
+    command: ["python", "solution/channel/fastapi/main.py"]
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
