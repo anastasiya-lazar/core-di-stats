@@ -68,9 +68,7 @@ class DBClientSP(DBClientSPI):
                     return row_id
                 return "Ok"
         except IntegrityError as e:
-            if "Duplicate entry" in e.orig.args[1]:
-                raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=e.orig.args[1])
-            elif "Cannot add or update a child row: a foreign key constraint fails" in e.orig.args[1]:
+            if "Duplicate entry" or "Cannot add or update a child row: a foreign key constraint fails" in e.orig.args[1]:
                 raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=e.orig.args[1])
             raise e
 
