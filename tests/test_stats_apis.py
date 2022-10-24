@@ -14,10 +14,12 @@ class StatsTestCase(TestCase):
         from solution.profile import profile
         cls._db = profile.db_client
         cls._client = TestClient(app).__enter__()
+        cls.ingest_data_url = "/v1/core-di-stats/ingest-data"
+        cls.create_ingestion_status_url = "/v1/core-di-stats/create-ingestion-status"
 
     def test_get_status_by_request_id(self, *_):
         """ Ingesting data for getting valid request_id """
-        response = self._client.post("/v1/core-di-stats/ingest-data", json={
+        response = self._client.post(self.ingest_data_url, json={
             "tenant_id": "test_tenant_id",
             "app_id": "test_app_id",
             "entity_type": "test_entity_type",
@@ -49,7 +51,7 @@ class StatsTestCase(TestCase):
 
     def test_missing_field_ingest_data(self, *_):
         """ Test ingest data with missing field """
-        request_url = "/v1/core-di-stats/ingest-data"
+        request_url = self.ingest_data_url
         response = self._client.post(request_url, json={
             "tenant_id": "string",
             "app_id": "string",
@@ -72,7 +74,7 @@ class StatsTestCase(TestCase):
 
     def test_create_ingestion_status_with_not_existing_request_id(self, *_):
         """ Test create ingestion status """
-        request_url = "/v1/core-di-stats/create-ingestion-status"
+        request_url = self.create_ingestion_status_url
         response = self._client.post(request_url, json={
             "request_id": "test_request_id",
             "source_id": "string",
@@ -91,7 +93,7 @@ class StatsTestCase(TestCase):
 
     def test_create_ingestion_status_with_missing_field(self, *_):
         """ Test create ingestion status """
-        request_url = "/v1/core-di-stats/create-ingestion-status"
+        request_url = self.create_ingestion_status_url
         response = self._client.post(request_url, json={
             "source_id": "string",
             "file_uri": "string",
@@ -117,7 +119,7 @@ class StatsTestCase(TestCase):
     def test_create_and_get_ingestion_statuses(self, *_):
         """ Ingesting data for getting valid request_id """
 
-        response = self._client.post("/v1/core-di-stats/ingest-data", json={
+        response = self._client.post(self.ingest_data_url, json={
             "tenant_id": "test_tenant_id",
             "app_id": "test_app_id",
             "entity_type": "test_entity_type",
@@ -130,7 +132,7 @@ class StatsTestCase(TestCase):
         request_id = response.json()['request_id']
 
         """ Test create ingestion status"""
-        request_url = "/v1/core-di-stats/create-ingestion-status"
+        request_url = self.create_ingestion_status_url
         response = self._client.post(request_url, json={
             "request_id": request_id,
             "source_id": "string",
