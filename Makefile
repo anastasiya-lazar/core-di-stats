@@ -131,11 +131,17 @@ build: ## build image, which is used for the services
 		--build-arg PIP_EXTRA_INDEX_URL=$(PIP_EXTRA_INDEX_URL) \
 		-t $(AZURE_REGESTRY_IMAGE_NAME):latest \
 		-f $(WORKDIR)/Dockerfile $(WORKDIR);
-	docker tag $(AZURE_REGESTRY_IMAGE_NAME):latest $(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
-	docker push   $(AZURE_REGESTRY_IMAGE_NAME):latest
-	docker push   $(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
-	echo $(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
+		docker tag $(AZURE_REGESTRY_IMAGE_NAME):latest $(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
 	echo "$(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)" > $(AZ_IMAGE_ARTIFACT_INFO)
+	echo $(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
+
+trivy-scan: ## Run trivy scan
+	sudo trivy image --format template --template "${trivy_template_path}" -o $(app)-report.html --ignore-unfixed --severity CRITICAL --no-progress --exit-code 1 $(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
+
+docker-push: ## Push image to the docker registry
+	docker push   $(AZURE_REGESTRY_IMAGE_NAME):latest
+	docker push   $$(cat $(AZ_IMAGE_ARTIFACT_INFO))
+
 
 deploy_service: ## Deploy stats handler service
 	cd $(WORKDIR)/deployment/azure/stats_service && \
