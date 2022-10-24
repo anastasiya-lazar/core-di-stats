@@ -1,6 +1,7 @@
 FROM python:3.9-buster as base
 ARG PIP_EXTRA_INDEX_URL
 
+RUN apt-get update && apt-get -y upgrade && apt-get clean
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
@@ -15,7 +16,6 @@ FROM base as dev
 ARG PIP_EXTRA_INDEX_URL
 
 #Azure related libs
-RUN apt-get update && apt-get install -y musl-dev libmariadb-dev && apt-get clean
 COPY requirements/requirements.azure.txt /requirements.azure.txt
 RUN pip3 install --no-cache-dir -r /requirements.azure.txt
 
@@ -58,7 +58,6 @@ FROM base as azure_service
 ARG PIP_EXTRA_INDEX_URL
 
 #Azure related libs
-RUN apt-get update && apt-get install -y musl-dev libmariadb-dev && apt-get clean
 COPY requirements/requirements.azure.txt /requirements.azure.txt
 RUN pip3 install --no-cache-dir -r /requirements.azure.txt
 RUN apt-get update && apt-get install -y vim
