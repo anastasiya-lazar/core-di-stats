@@ -24,6 +24,34 @@ services:
     networks:
       - core-fkg-network
 
+  core-di-stats-handler-gen1-message-handler:
+    container_name: core-di-stats-handler-gen1-message-handler
+    profiles:
+      - mysql
+      - mariadb
+    build:
+      dockerfile: Dockerfile
+      target: dev
+      context: .
+      args:
+        PIP_EXTRA_INDEX_URL: ${PIP_EXTRA_INDEX_URL}
+    command: ["python", "solution/channel/queue_entrypoint.py"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - "./src/:/usr/src/app"
+    env_file:
+      - .env
+    networks:
+      - core-fkg-network
+    ports:
+      - ${HEALTH_CHECK_PORT}:${HEALTH_CHECK_PORT}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:${HEALTH_CHECK_PORT}/health_check" ]
+      interval: 10s
+      start_period: 15s
+
+
   core-di-stats-handler-gen1-stats-db-mysql:
     profiles:
       - mysql

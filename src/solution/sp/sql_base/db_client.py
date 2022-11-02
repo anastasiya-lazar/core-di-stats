@@ -13,10 +13,10 @@ from sqlalchemy.exc import IntegrityError
 from starlette.status import HTTP_400_BAD_REQUEST
 
 from core.api.dtos import (StatusResponseSchema, IngestionParamsSchema, CreateIngestionStatusSchema,
-                           UpdateIngestionStatusSchema, GetIngestionStatusSchema, FilterParams)
+                           UpdateIngestionStatusSchema, GetIngestionStatusSchema, FilterParams, SubscriberMessageSchema)
 from core.spi.db_client import DBClientSPI
 from solution.sp.sql_base.models import (IngestionRequestStatus, Base, IngestionStatus, RequestStatusEnum,
-                                         IngestionStatusEnum, IngestionRequestFilter)
+                                         IngestionStatusEnum, IngestionRequestFilter, SubscriberIngestionStatus)
 
 logger = get_logger(__name__)
 
@@ -52,7 +52,7 @@ class DBClientSP(DBClientSPI):
             args['ssl'] = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH, capath=conf.DB_SSL_PATH_CERT)
         return args
 
-    async def _insert(self, row: Base, filters=None, ingestion_status: bool = False):
+    async def _insert(self, row: Base, filters=None, ingestion_status: bool = False, queue: bool = False):
         try:
             async with self.session() as session:
                 session.add(row)
@@ -69,6 +69,9 @@ class DBClientSP(DBClientSPI):
                 return "Ok"
         except IntegrityError as e:
             if "Duplicate entry" or "Cannot add or update a child row: a foreign key constraint fails" in e.orig.args[1]:
+                if queue:
+                    logger.error(f"{e.orig.args[1]}")
+                    return "Error"
                 raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=e.orig.args[1])
             raise e
 
@@ -170,3 +173,11 @@ class DBClientSP(DBClientSPI):
         async with self.session() as session:
             ingestion = await self._get_ingestion_status_by_request_id_and_source_id(session, request_id, source_id)
             return GetIngestionStatusSchema.from_orm(ingestion)
+
+    async def db_create_subscriber_ingestion_status(self, payload: SubscriberMessageSchema) -> str:
+        """
+        Create subscriber ingestion status
+        :param payload:
+        """
+        request = SubscriberIngestionStatus(**payload.dict())
+        return await self._insert(request, queue=True)

@@ -3,7 +3,7 @@ from typing import Optional, List, Literal
 
 from pydantic import BaseModel
 
-from solution.sp.sql_base.models import IngestionStatusEnum, RequestStatusEnum, FilterParams
+from solution.sp.sql_base.models import IngestionStatusEnum, RequestStatusEnum, FilterParams, SubscriberStatusEnum
 
 
 class IngestionParamsSchema(BaseModel):
@@ -107,6 +107,24 @@ class StatusResponseSchema(BaseModel):
     end_time: Optional[datetime]
     ingestion_statuses: Optional[List[GetIngestionStatusSchema]]
     subscriber_ingestion_statuses: Optional[List[GetSubscriberIngestionStatusSchema]]
+
+    class Config:
+        orm_mode = True
+        use_enum_values = True
+
+
+class SubscriberMessageSchema(BaseModel):
+    request_id: str
+    source_id: str
+    file_uri: str
+    subscriber: str
+    status: Optional[SubscriberStatusEnum] = SubscriberStatusEnum.RUNNING
+    is_error: Optional[bool]
+    message: Optional[str]
+    total_record_count: Optional[int] = 0
+    total_failed_count: Optional[int] = 0
+    total_success_count: Optional[int] = 0
+    status_url: Optional[str]
 
     class Config:
         orm_mode = True
