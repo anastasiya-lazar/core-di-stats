@@ -34,6 +34,13 @@ class IngestionStatusEnum(Enum):
     FAILED = "Failed"
 
 
+class SubscriberStatusEnum(Enum):
+    PENDING = "Pending"
+    RUNNING = "Running"
+    COMPLETED = "Completed"
+    FAILED = "Failed"
+
+
 class IngestionRequestFilter(Base):
     __tablename__ = "ingestion_request_filter"
 

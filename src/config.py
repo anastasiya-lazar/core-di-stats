@@ -45,6 +45,12 @@ REQUEST_DB_CONNECTION_STRING = f"{db_driver}+asyncmy://{DB_USERNAME}:{DB_PASSWOR
 
 AUTHENTICATOR_URL = os.environ.get("AUTHENTICATOR_URL")
 
+STATS_QUEUE_CONNECTION_STRING = os.environ.get(f'STATS_QUEUE_CONNECTION_STRING', '')
+
+HEALTH_CHECK_PORT = os.environ.get("HEALTH_CHECK_PORT", 8998)
+HEALTH_CHECK_LIST = list(filter(None, os.environ.get("HEALTH_CHECK_LIST", "loop_beat,message_proceed").split(",")))
+MAX_DELIVERY_COUNT = int(os.environ.get("MAX_DELIVERY_COUNT", 10))
+
 # Keep the URL empty to use ConsoleSpanExporter or set http://otel-collector:4317 for local OTLPSpanExporter
 OTEL_COLLECTOR_URL = os.environ.get('OTEL_COLLECTOR_URL')
 

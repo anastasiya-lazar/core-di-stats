@@ -27,3 +27,4 @@ def config_open_telemetry():
     processor = BatchSpanProcessor(exporter)
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
+    logger.info("Open telemetry configured")
