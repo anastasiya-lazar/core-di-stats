@@ -180,7 +180,7 @@ class DBClientSP(DBClientSPI):
         row = SubscriberIngestionStatus(**payload.dict())
 
         try:
-            return await self._insert(row, ingestion_status=True)
+            return await self._insert(row)
 
         except DuplicationException as de:
             async with self.session() as session:
@@ -203,10 +203,16 @@ class DBClientSP(DBClientSPI):
                 await session.commit()
 
                 if ex.rowcount != 1:
-                    logger.error(f"Can not update {SubscriberIngestionStatus.__name__} with payload {payload}")
+                    logger.error(f"\n--------------------------------------------------\n"
+                                 f"Can not update {SubscriberIngestionStatus.__name__} with payload {payload}\n"
+                                 f"--------------------------------------------------")
                 else:
-                    logger.info(f"Updated {SubscriberIngestionStatus.__name__} successfully")
+                    logger.info(f"\n--------------------------------------------------\n"
+                                f"Updated {SubscriberIngestionStatus.__name__} successfully\n"
+                                f"--------------------------------------------------")
 
         except ForeignKeyException as fke:
-            logger.error(f"Can not create {SubscriberIngestionStatus.__name__} with payload {payload}, "
-                         f"exception info: {fke.message}")
+            logger.error(f"\n--------------------------------------------------\n"
+                         f"Can not create {SubscriberIngestionStatus.__name__} with payload {payload}, "
+                         f"exception info: {fke.message}\n"
+                         f"--------------------------------------------------")
