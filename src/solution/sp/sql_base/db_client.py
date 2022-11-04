@@ -4,17 +4,16 @@ from fastapi import HTTPException
 
 import config as conf
 from bst_core.shared.logger import get_logger
-from sqlalchemy import update, func
+from sqlalchemy import update, case
 from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
                                     create_async_engine)
 from sqlalchemy.future import select
 from sqlalchemy.orm import sessionmaker, joinedload
 from sqlalchemy.exc import IntegrityError
-from starlette.status import HTTP_400_BAD_REQUEST
 
 from core.api.dtos import (StatusResponseSchema, IngestionParamsSchema, CreateIngestionStatusSchema,
                            UpdateIngestionStatusSchema, GetIngestionStatusSchema, FilterParams, SubscriberMessageSchema)
-from core.spi.db_client import DBClientSPI
+from core.spi.db_client import DBClientSPI, DuplicationException, ForeignKeyException, NotFoundException
 from solution.sp.sql_base.models import (IngestionRequestStatus, Base, IngestionStatus, RequestStatusEnum,
                                          IngestionStatusEnum, IngestionRequestFilter, SubscriberIngestionStatus)
 
@@ -52,7 +51,7 @@ class DBClientSP(DBClientSPI):
             args['ssl'] = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH, capath=conf.DB_SSL_PATH_CERT)
         return args
 
-    async def _insert(self, row: Base, filters=None, ingestion_status: bool = False, queue: bool = False):
+    async def _insert(self, row: Base, filters=None, ingestion_status: bool = False):
         try:
             async with self.session() as session:
                 session.add(row)
@@ -68,11 +67,10 @@ class DBClientSP(DBClientSPI):
                     return row_id
                 return "Ok"
         except IntegrityError as e:
-            if "Duplicate entry" or "Cannot add or update a child row: a foreign key constraint fails" in e.orig.args[1]:
-                if queue:
-                    logger.error(f"{e.orig.args[1]}")
-                    return "Error"
-                raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=e.orig.args[1])
+            if "Duplicate entry" in e.orig.args[1]:
+                raise DuplicationException(e.orig.args[1])
+            elif "Cannot add or update a child row: a foreign key constraint fails" in e.orig.args[1]:
+                raise ForeignKeyException(e.orig.args[1])
             raise e
 
     @staticmethod
@@ -81,8 +79,8 @@ class DBClientSP(DBClientSPI):
         ex = await session.execute(stmt)
         await session.commit()
         if ex.rowcount != 1:
-            logger.error(f"Can not update {table.__name__} with id {record_id} with payload {payload}")
-            raise HTTPException(status_code=404, detail=f"Can not found {table.__name__} by id {record_id}")
+            logger.error(f"Can not update {table.__name__} by id {record_id} with payload {payload}")
+            raise NotFoundException(f"Can not found {table.__name__} with id {record_id}")
 
     async def _update_request_table_to_failed(self, request_id: str):
         """
@@ -102,8 +100,8 @@ class DBClientSP(DBClientSPI):
         query = await session.execute(stmt)
         ingestion = query.scalars().first()
         if ingestion is None:
-            raise HTTPException(status_code=404, detail=f"Can not found ingestion by request id {request_id} "
-                                                        f"and source id {source_id}")
+            raise NotFoundException(f"Can not found ingestion status by request_id {request_id} "
+                                    f"and source_id {source_id}")
         return ingestion
 
     async def db_insert_new_request(self, payload: IngestionParamsSchema) -> str:
@@ -131,7 +129,7 @@ class DBClientSP(DBClientSPI):
             query = await session.execute(stmt)
             resp = query.scalars().first()
             if resp is None:
-                raise HTTPException(status_code=404, detail=f"Can not found request by id {request_id}")
+                raise NotFoundException(f"Can not found request status by id {request_id}")
         return StatusResponseSchema.from_orm(resp)
 
     async def db_create_ingestion_status(self, payload: CreateIngestionStatusSchema) -> str:
@@ -159,10 +157,10 @@ class DBClientSP(DBClientSPI):
             ex = await session.execute(stmt)
             await session.commit()
             if ex.rowcount != 1:
-                logger.error(f"Can not update {IngestionStatus.__name__} with request_id {request_id} "
+                logger.error(f"Can not update {IngestionStatus.__name__} by request_id {request_id} "
                              f"and source_id {source_id} with payload {payload}")
-                raise HTTPException(status_code=404, detail=f"Can not found {IngestionStatus.__name__} by "
-                                                            f"request_id {request_id} and source_id {source_id}")
+                raise NotFoundException(f"Can not found {IngestionStatus.__name__} with request id {request_id} "
+                                        f"and source_id {source_id}")
 
     async def db_get_ingestion_status(self, request_id: str, source_id: str) -> GetIngestionStatusSchema:
         """
@@ -174,10 +172,41 @@ class DBClientSP(DBClientSPI):
             ingestion = await self._get_ingestion_status_by_request_id_and_source_id(session, request_id, source_id)
             return GetIngestionStatusSchema.from_orm(ingestion)
 
-    async def db_create_subscriber_ingestion_status(self, payload: SubscriberMessageSchema) -> str:
+    async def db_create_or_update_subscriber_ingestion_status(self, payload: SubscriberMessageSchema):
         """
         Create subscriber ingestion status
         :param payload:
         """
-        request = SubscriberIngestionStatus(**payload.dict())
-        return await self._insert(request, queue=True)
+        row = SubscriberIngestionStatus(**payload.dict())
+
+        try:
+            return await self._insert(row, ingestion_status=True)
+
+        except DuplicationException as de:
+            async with self.session() as session:
+                logger.info(f"Subscriber ingestion status already exists and will be updated with payload {payload}"
+                            f" duplication exception: {de.message}")
+
+                case_creator_for_totals = lambda kv: (kv[0], case(
+                    (getattr(SubscriberIngestionStatus, kv[0]) < kv[1], kv[1]),
+                    else_=getattr(SubscriberIngestionStatus, kv[0]))
+                ) if "total" in kv[0] else kv
+
+                stmt = update(SubscriberIngestionStatus).where(
+                    SubscriberIngestionStatus.request_id == payload.request_id,
+                    SubscriberIngestionStatus.subscriber == payload.subscriber,
+                    SubscriberIngestionStatus.source_id == payload.source_id,
+                    SubscriberIngestionStatus.file_uri == payload.file_uri,
+                ).values(**dict(map(case_creator_for_totals, payload.dict(exclude_unset=True).items())))
+
+                ex = await session.execute(stmt)
+                await session.commit()
+
+                if ex.rowcount != 1:
+                    logger.error(f"Can not update {SubscriberIngestionStatus.__name__} with payload {payload}")
+                else:
+                    logger.info(f"Updated {SubscriberIngestionStatus.__name__} successfully")
+
+        except ForeignKeyException as fke:
+            logger.error(f"Can not create {SubscriberIngestionStatus.__name__} with payload {payload}, "
+                         f"exception info: {fke.message}")

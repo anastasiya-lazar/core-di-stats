@@ -6,6 +6,7 @@ from json import JSONDecodeError
 
 from bst_core.shared.logger import get_logger
 from config import MAX_DELIVERY_COUNT, OTEL_CONTEXT_NAME
+from core.api.dtos import SubscriberMessageSchema
 from core.impl.health_check import LoopBeatCheck, MessageProceedCheck
 from core.spi.stats_message_handler import StatsMessageHandlerSPI
 from opentelemetry import trace
@@ -45,7 +46,8 @@ class StatsMessageHandlerSP(StatsMessageHandlerSPI):
         self._lim_delay_count = 8
         self._max_delivery_count = MAX_DELIVERY_COUNT
 
-    def _create_context(self, raw_msg: ServiceBusReceivedMessage):
+    @staticmethod
+    def _create_context(raw_msg: ServiceBusReceivedMessage):
         if not raw_msg.application_properties:
             return None
         if OTEL_CONTEXT_NAME not in raw_msg.application_properties:
@@ -87,8 +89,9 @@ class StatsMessageHandlerSP(StatsMessageHandlerSPI):
                                 span.set_attribute("message", raw_msg_body)
                                 msg = json.loads(raw_msg_body)
                                 span.set_attribute("request_id", msg.get('request_id'))
-                                logger.debug(f"send to process {msg=}")
-                                await self._handler(msg, raw_msg.message_id)
+                                validated_msg = SubscriberMessageSchema(**msg)
+                                logger.debug(f"send to process {validated_msg}")
+                                await self._handler(validated_msg, raw_msg.message_id)
                         except ValidationError as ve:
                             logger.error("Data validation error", exc_info=ve)
                             await receiver.dead_letter_message(

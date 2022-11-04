@@ -68,14 +68,19 @@ class SubscriberIngestionStatus(Base):
     source_id = Column(String(128))
     file_uri = Column(String(256))
     subscriber = Column(String(128))
-    status = Column(String(80))
-    is_error = Column(Boolean)
-    message = Column(String(256))
+    status = Column(String(80), default=SubscriberStatusEnum.PENDING)
+    is_error = Column(Boolean, default=False)
+    message = Column(String(256), default="")
     total_record_count = Column(Integer, default=0)
     total_failed_count = Column(Integer, default=0)
     total_success_count = Column(Integer, default=0)
-    status_url = Column(String(256))
+    status_url = Column(String(256), default="")
     last_stat_updated = Column(DateTime(), onupdate=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("request_id", "source_id", "subscriber", "file_uri",
+                         name="unique_subscriber_ingestion_status"),
+    )
 
 
 class IngestionStatus(Base):
@@ -86,8 +91,8 @@ class IngestionStatus(Base):
     file_uri = Column(String(256))
     entity_type = Column(String(80))
     status = Column(String(80), default=IngestionStatusEnum.RUNNING.value)
-    is_error = Column(Boolean)
-    message = Column(String(256))
+    is_error = Column(Boolean, default=False)
+    message = Column(String(256), default="")
     total_record_count = Column(Integer, default=0)
     total_failed_count = Column(Integer, default=0)
     total_success_count = Column(Integer, default=0)
@@ -107,10 +112,10 @@ class IngestionRequestStatus(Base):
     app_id = Column(String(80))
     entity_type = Column(String(80))
     src_type = Column(String(80))
-    is_batch_required = Column(Boolean)
-    batch_size = Column(Integer)
+    is_batch_required = Column(Boolean, default=False)
+    batch_size = Column(Integer, default=0)
     subscriber_name = Column(JSON)
-    enrich_oncreation = Column(Boolean)
+    enrich_oncreation = Column(Boolean, default=False)
     status = Column(String(80), default=RequestStatusEnum.STARTED.value)
     start_time = Column(DateTime, default=lambda: datetime.now(), )
     end_time = Column(DateTime, default=None)
