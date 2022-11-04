@@ -4,6 +4,21 @@ from core.api.dtos import (IngestionParamsSchema, StatusResponseSchema, CreateIn
                            UpdateIngestionStatusSchema, SubscriberMessageSchema)
 
 
+class DuplicationException(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
+class ForeignKeyException(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
+class NotFoundException(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
 class DBClientSPI(ABC):
 
     @abstractmethod
@@ -46,7 +61,7 @@ class DBClientSPI(ABC):
         """
 
     @abstractmethod
-    def db_create_subscriber_ingestion_status(self, payload: SubscriberMessageSchema) -> str:
+    def db_create_or_update_subscriber_ingestion_status(self, payload: SubscriberMessageSchema):
         """
         Create subscriber ingestion status
         :param payload: request body
