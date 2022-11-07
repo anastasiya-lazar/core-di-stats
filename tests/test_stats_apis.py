@@ -46,7 +46,7 @@ class StatsTestCase(TestCase):
         self.assertDictEqual(
             invalid_request_id_response.json(),
             {'code': 404, 'is_error': True,
-             'message': 'Can not found request by id invalid_request_id'}
+             'message': 'Can not found request status by id invalid_request_id'}
         )
 
     def test_missing_field_ingest_data(self, *_):
@@ -162,7 +162,7 @@ class StatsTestCase(TestCase):
             "source_queue_name": "string"
         })
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 409)
         self.assertIn("Duplicate entry", response.json()['message'])
 
     @patch('solution.sp.sql_base.db_client.DBClientSP.db_update_ingestion_status')
