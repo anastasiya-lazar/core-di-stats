@@ -15,7 +15,8 @@ from core.api.dtos import (StatusResponseSchema, IngestionParamsSchema, CreateIn
                            UpdateIngestionStatusSchema, GetIngestionStatusSchema, FilterParams, SubscriberMessageSchema)
 from core.spi.db_client import DBClientSPI, DuplicationException, ForeignKeyException, NotFoundException
 from solution.sp.sql_base.models import (IngestionRequestStatus, Base, IngestionStatus, RequestStatusEnum,
-                                         IngestionStatusEnum, IngestionRequestFilter, SubscriberIngestionStatus)
+                                         IngestionStatusEnum, IngestionRequestFilter, SubscriberIngestionStatus,
+                                         SubscriberStatusEnum)
 
 logger = get_logger(__name__)
 
@@ -103,6 +104,13 @@ class DBClientSP(DBClientSPI):
             raise NotFoundException(f"Can not found ingestion status by request_id {request_id} "
                                     f"and source_id {source_id}")
         return ingestion
+
+    @staticmethod
+    def _subs_where_condition(payload: SubscriberMessageSchema):
+        return (SubscriberIngestionStatus.request_id == payload.request_id,
+                SubscriberIngestionStatus.subscriber == payload.subscriber,
+                SubscriberIngestionStatus.source_id == payload.source_id,
+                SubscriberIngestionStatus.file_uri == payload.file_uri)
 
     async def db_insert_new_request(self, payload: IngestionParamsSchema) -> str:
         """
@@ -210,6 +218,20 @@ class DBClientSP(DBClientSPI):
                     logger.info(f"\n--------------------------------------------------\n"
                                 f"Updated {SubscriberIngestionStatus.__name__} successfully\n"
                                 f"--------------------------------------------------")
+                    stmt2 = update(SubscriberIngestionStatus).where(
+                        SubscriberIngestionStatus.request_id == payload.request_id,
+                        SubscriberIngestionStatus.subscriber == payload.subscriber,
+                        SubscriberIngestionStatus.source_id == payload.source_id,
+                        SubscriberIngestionStatus.file_uri == payload.file_uri,
+                    ).values(
+                        {"status": case((
+                            SubscriberIngestionStatus.total_record_count ==
+                            SubscriberIngestionStatus.total_success_count, SubscriberStatusEnum.COMPLETED.value,
+                        ), else_=SubscriberIngestionStatus.status)
+                        })
+                    await session.execute(stmt2)
+                    await session.commit()
+                    logger.info(f"-----Updated {SubscriberIngestionStatus.__name__} status successfully-----")
 
         except ForeignKeyException as fke:
             logger.error(f"\n--------------------------------------------------\n"
