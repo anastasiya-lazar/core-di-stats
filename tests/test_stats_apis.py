@@ -1,9 +1,7 @@
 from unittest import TestCase
+import pytest
 
-from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
-
-from solution.channel.fastapi.main import app
 
 
 @patch("solution.channel.fastapi.auth_controller.Client")
@@ -11,15 +9,12 @@ from solution.channel.fastapi.main import app
 class StatsTestCase(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        from solution.profile import profile
-        cls._db = profile.db_client
-        cls._client = TestClient(app).__enter__()
         cls.ingest_data_url = "/v1/core-di-stats/ingest-data"
         cls.create_ingestion_status_url = "/v1/core-di-stats/create-ingestion-status"
 
     def test_get_status_by_request_id(self, *_):
         """ Ingesting data for getting valid request_id """
-        response = self._client.post(self.ingest_data_url, json={
+        response = pytest._client.post(self.ingest_data_url, json={
             "tenant_id": "test_tenant_id",
             "app_id": "test_app_id",
             "entity_type": "test_entity_type",
@@ -33,7 +28,7 @@ class StatsTestCase(TestCase):
         request_id = response.json()['request_id']
 
         """ Getting status by request_id"""
-        response = self._client.get(f"/v1/core-di-stats/get-status/{request_id}")
+        response = pytest._client.get(f"/v1/core-di-stats/get-status/{request_id}")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json().get("app_id"), "test_app_id")
         self.assertEqual(response.json().get("subscriber_name"), ["test_subscriber_name", "test_subscriber_name_2"])
@@ -41,7 +36,7 @@ class StatsTestCase(TestCase):
     def test_get_status_by_invalid_request_id(self, *_):
         """ Test get status with invalid request_id """
         invalid_request_id = "invalid_request_id"
-        invalid_request_id_response = self._client.get(f"/v1/core-di-stats/get-status/{invalid_request_id}")
+        invalid_request_id_response = pytest._client.get(f"/v1/core-di-stats/get-status/{invalid_request_id}")
         self.assertEqual(invalid_request_id_response.status_code, 404)
         self.assertDictEqual(
             invalid_request_id_response.json(),
@@ -52,7 +47,7 @@ class StatsTestCase(TestCase):
     def test_missing_field_ingest_data(self, *_):
         """ Test ingest data with missing field """
         request_url = self.ingest_data_url
-        response = self._client.post(request_url, json={
+        response = pytest._client.post(request_url, json={
             "tenant_id": "string",
             "app_id": "string",
             "entity_type": "string",
@@ -75,7 +70,7 @@ class StatsTestCase(TestCase):
     def test_create_ingestion_status_with_not_existing_request_id(self, *_):
         """ Test create ingestion status """
         request_url = self.create_ingestion_status_url
-        response = self._client.post(request_url, json={
+        response = pytest._client.post(request_url, json={
             "request_id": "test_request_id",
             "source_id": "string",
             "file_uri": "string",
@@ -94,7 +89,7 @@ class StatsTestCase(TestCase):
     def test_create_ingestion_status_with_missing_field(self, *_):
         """ Test create ingestion status """
         request_url = self.create_ingestion_status_url
-        response = self._client.post(request_url, json={
+        response = pytest._client.post(request_url, json={
             "source_id": "string",
             "file_uri": "string",
             "entity_type": "string",
@@ -119,7 +114,7 @@ class StatsTestCase(TestCase):
     def test_create_and_get_ingestion_statuses(self, *_):
         """ Ingesting data for getting valid request_id """
 
-        response = self._client.post(self.ingest_data_url, json={
+        response = pytest._client.post(self.ingest_data_url, json={
             "tenant_id": "test_tenant_id",
             "app_id": "test_app_id",
             "entity_type": "test_entity_type",
@@ -133,7 +128,7 @@ class StatsTestCase(TestCase):
 
         """ Test create ingestion status"""
         request_url = self.create_ingestion_status_url
-        response = self._client.post(request_url, json={
+        response = pytest._client.post(request_url, json={
             "request_id": request_id,
             "source_id": "string",
             "file_uri": "string",
@@ -149,7 +144,7 @@ class StatsTestCase(TestCase):
         self.assertEqual(response.status_code, 201)
 
         """Test duplicate ingestion status"""
-        response = self._client.post(request_url, json={
+        response = pytest._client.post(request_url, json={
             "request_id": request_id,
             "source_id": "string",
             "file_uri": "string",
@@ -169,7 +164,7 @@ class StatsTestCase(TestCase):
     def test_update_ingestion_status(self, db_update_ingestion_status: MagicMock, *_):
         """ Ingesting data for getting valid request_id """
         db_update_ingestion_status.return_value = True
-        response = self._client.patch("/v1/core-di-stats/update-ingestion-status/test/test", json={
+        response = pytest._client.patch("/v1/core-di-stats/update-ingestion-status/test/test", json={
             "request_id": "test_request_id",
             "source_id": "string",
             "file_uri": "string",
@@ -189,7 +184,7 @@ class StatsTestCase(TestCase):
     def test_update_ingestion_status_with_invalid_enum(self, *_):
         """ Test update ingestion status with invalid enum """
         request_url = "/v1/core-di-stats/update-ingestion-status/test/test"
-        response = self._client.patch(request_url, json={
+        response = pytest._client.patch(request_url, json={
             "request_id": "test_request_id",
             "source_id": "string",
             "file_uri": "string",
@@ -206,15 +201,15 @@ class StatsTestCase(TestCase):
         self.assertNotEqual(response.status_code, 200)
         self.assertIn("value is not a valid enumeration member", response.json()['detail'][0]['msg'])
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        try:
-            cls._db.session.close_all()
-            cls._db.engine.dispose()
-            cls._db.engine = None
-            cls._db.session = None
-            cls._client.__exit__()
-            import gc
-            gc.collect()
-        except Exception as e:
-            print(e)
+    # @classmethod
+    # def tearDownClass(cls) -> None:
+    #     try:
+    #         cls._db.session.close_all()
+    #         cls._db.engine.dispose()
+    #         cls._db.engine = None
+    #         cls._db.session = None
+    #         cls._client.__exit__()
+    #         import gc
+    #         gc.collect()
+    #     except Exception as e:
+    #         print(e)

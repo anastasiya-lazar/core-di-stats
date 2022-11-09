@@ -105,12 +105,6 @@ class DBClientSP(DBClientSPI):
                                     f"and source_id {source_id}")
         return ingestion
 
-    @staticmethod
-    def _subs_where_condition(payload: SubscriberMessageSchema):
-        return (SubscriberIngestionStatus.request_id == payload.request_id,
-                SubscriberIngestionStatus.subscriber == payload.subscriber,
-                SubscriberIngestionStatus.source_id == payload.source_id,
-                SubscriberIngestionStatus.file_uri == payload.file_uri)
 
     async def db_insert_new_request(self, payload: IngestionParamsSchema) -> str:
         """
@@ -200,25 +194,20 @@ class DBClientSP(DBClientSPI):
                     else_=getattr(SubscriberIngestionStatus, kv[0]))
                 ) if "total" in kv[0] else kv
 
-                stmt = update(SubscriberIngestionStatus).where(
+                update_subscriber = update(SubscriberIngestionStatus).where(
                     SubscriberIngestionStatus.request_id == payload.request_id,
                     SubscriberIngestionStatus.subscriber == payload.subscriber,
                     SubscriberIngestionStatus.source_id == payload.source_id,
                     SubscriberIngestionStatus.file_uri == payload.file_uri,
                 ).values(**dict(map(case_creator_for_totals, payload.dict(exclude_unset=True).items())))
 
-                ex = await session.execute(stmt)
-                await session.commit()
+                ex = await session.execute(update_subscriber)
 
                 if ex.rowcount != 1:
-                    logger.error(f"\n--------------------------------------------------\n"
-                                 f"Can not update {SubscriberIngestionStatus.__name__} with payload {payload}\n"
-                                 f"--------------------------------------------------")
+                    logger.error(f"Can not update {SubscriberIngestionStatus.__name__} with payload {payload}")
                 else:
-                    logger.info(f"\n--------------------------------------------------\n"
-                                f"Updated {SubscriberIngestionStatus.__name__} successfully\n"
-                                f"--------------------------------------------------")
-                    stmt2 = update(SubscriberIngestionStatus).where(
+                    logger.info(f"Updated {SubscriberIngestionStatus.__name__} successfully")
+                    update_status = update(SubscriberIngestionStatus).where(
                         SubscriberIngestionStatus.request_id == payload.request_id,
                         SubscriberIngestionStatus.subscriber == payload.subscriber,
                         SubscriberIngestionStatus.source_id == payload.source_id,
@@ -229,12 +218,10 @@ class DBClientSP(DBClientSPI):
                             SubscriberIngestionStatus.total_success_count, SubscriberStatusEnum.COMPLETED.value,
                         ), else_=SubscriberIngestionStatus.status)
                         })
-                    await session.execute(stmt2)
+                    await session.execute(update_status)
                     await session.commit()
-                    logger.info(f"-----Updated {SubscriberIngestionStatus.__name__} status successfully-----")
+                    logger.info(f"Updated {SubscriberIngestionStatus.__name__} status successfully")
 
         except ForeignKeyException as fke:
-            logger.error(f"\n--------------------------------------------------\n"
-                         f"Can not create {SubscriberIngestionStatus.__name__} with payload {payload}, "
-                         f"exception info: {fke.message}\n"
-                         f"--------------------------------------------------")
+            logger.error(f"Can not create {SubscriberIngestionStatus.__name__} with payload {payload}, "
+                         f"exception info: {fke.message}")
