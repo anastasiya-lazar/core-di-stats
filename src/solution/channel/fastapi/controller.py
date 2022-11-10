@@ -39,7 +39,7 @@ async def create_ingestion_status(payload: CreateIngestionStatusSchema):
 async def update_ingestion_status(request_id: str, source_id: str, payload: UpdateIngestionStatusSchema):
     """Updates the record by id with the provided data."""
     await rest_controller.update_ingestion_status(request_id, source_id, payload)
-    return {"message": "Ingestion status is updated successfully"}
+    return {"message": "Ingestion status was successfully updated"}
 
 
 @router.get("/get-ingestion-status/{request_id}/{source_id}", response_model=GetIngestionStatusSchema,

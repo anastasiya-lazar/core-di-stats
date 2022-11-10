@@ -1,10 +1,14 @@
+import asyncio
+from unittest.mock import patch
+
 import pytest
 import warnings
-from fastapi.testclient import TestClient
+
+import pytest_asyncio
+from httpx import AsyncClient
 
 from solution.channel.fastapi.main import app
 import config
-from solution.sp.sql_base.models import SubscriberStatusEnum
 
 pytest_plugins = [
     'tests.plugins.configure_plugin',
@@ -31,22 +35,11 @@ def apply_migrations():
         raise Exception("Unsupported DB")
 
 
-@pytest.fixture
-def get_valid_message(request_id="test", total_record_count=0, total_failed_count=0, total_success_count=0):
-    """ Get valid message """
-    return {
-        "request_id": request_id,
-        "source_id": "str",
-        "file_uri": "str",
-        "subscriber": "str",
-        "status": SubscriberStatusEnum.RUNNING.value,
-        "is_error": False,
-        "message": "str",
-        "total_record_count": total_record_count,
-        "total_failed_count": total_failed_count,
-        "total_success_count": total_success_count,
-        "status_url": "str"
-    }
+@pytest.fixture(scope="session", autouse=True)
+def event_loop():
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
 
 
 @pytest.fixture
@@ -65,29 +58,26 @@ def get_ingest_data_payload():
     }
 
 
-def pytest_configure():
-    """
-    Allows plugins and conftest files to perform initial configuration.
-    This hook is called for every plugin and initial conftest
-    file after command line options have been parsed.
-    """
+@pytest.fixture(scope="session")
+def get_db():
+    # apply_migrations()
     from solution.profile import profile
-    pytest._db = profile.db_client
-    pytest._client = TestClient(app).__enter__()
-
-
-def pytest_unconfigure():
-    """
-    called before test process is exited.
-    """
-
+    db = profile.db_client
+    yield db
     try:
-        pytest._db.session.close_all()
-        pytest._db.engine.dispose()
-        pytest._db.engine = None
-        pytest._db.session = None
-        pytest._client.__exit__()
+        db.session.close_all()
+        db.engine.dispose()
+        db.engine = None
+        db.session = None
         import gc
         gc.collect()
     except Exception as e:
         print(e)
+
+
+@pytest_asyncio.fixture
+async def get_api_client() -> AsyncClient:
+    with patch("solution.channel.fastapi.auth_controller.Client"):
+        with patch("solution.channel.fastapi.auth_controller.AuthTokenValidator"):
+            async with AsyncClient(app=app, base_url="http://test") as ac:
+                yield ac
