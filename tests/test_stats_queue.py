@@ -1,56 +1,123 @@
-from unittest import TestCase
 import pytest
 
-from core.api.dtos import IngestionParamsSchema
+from core.api.dtos import IngestionParamsSchema, SubscriberMessageSchema
 from core.impl.message_processor import MessageProcessor
 from solution.sp.sql_base.models import SubscriberStatusEnum
 
 
-class MessageProcessorTestCase(TestCase):
-    async def setUp(self) -> None:
-        self.msg_processor = MessageProcessor()
-        self.request_id = await pytest._db.db_insert_new_request(IngestionParamsSchema(**ingest_data_payload))
+def get_valid_message(request_id="test_request_id", total_record_count=0, total_failed_count=0, total_success_count=0):
+    """ Get valid message """
+    return {
+        "request_id": request_id,
+        "source_id": "str",
+        "file_uri": "str",
+        "subscriber": "str",
+        "status": SubscriberStatusEnum.RUNNING.value,
+        "is_error": False,
+        "message": "str",
+        "total_record_count": total_record_count,
+        "total_failed_count": total_failed_count,
+        "total_success_count": total_success_count,
+        "status_url": "str"
+    }
 
-    async def test_message_processor_create(self):
-        await self.msg_processor(get_valid_message(self.request_id, 10, 0, 0), "test_id")
-        subscriber_statuses = await pytest._db.db_get_request_status(
-            self.request_id).subscriber_ingestion_statuses
-        self.assertEqual(
-            subscriber_statuses is not None,
-            True)
-        self.assertEqual(len(subscriber_statuses), 1)
-        self.assertEqual(subscriber_statuses[0].status, SubscriberStatusEnum.RUNNING.value)
-        self.assertEqual(subscriber_statuses[0].total_record_count, 10)
-        self.assertEqual(subscriber_statuses[0].total_failed_count, 0)
-        self.assertEqual(subscriber_statuses[0].total_success_count, 0)
 
-    async def test_message_processor_update(self):
-        await self.msg_processor(get_valid_message(self.request_id, 10, 0, 5), "test_id")
-        subscriber_statuses_after_update = await pytest._db.db_get_request_status(
-            self.request_id).subscriber_ingestion_statuses
-        self.assertEqual(subscriber_statuses_after_update[0].total_record_count, 10)
-        self.assertEqual(subscriber_statuses_after_update[0].total_failed_count, 0)
-        self.assertEqual(subscriber_statuses_after_update[0].total_success_count, 5)
-        self.assertEqual(len(subscriber_statuses_after_update), 1)
+@pytest.mark.asyncio
+async def test_message_processor_create(get_db, get_ingest_data_payload):
+    msg_processor = MessageProcessor()
+    request_id = await get_db.db_insert_new_request(IngestionParamsSchema(**get_ingest_data_payload))
+    valid_msg = get_valid_message(request_id=request_id, total_record_count=10, total_failed_count=0,
+                                  total_success_count=0)
+    valid_schema = SubscriberMessageSchema(**valid_msg)
+    await msg_processor(valid_schema, "test_id")
+    response_schema = await get_db.db_get_request_status(request_id)
+    subscriber_statuses = response_schema.dict().get("subscriber_ingestion_statuses")
+    assert subscriber_statuses is not None
+    assert len(subscriber_statuses) == 1
+    assert subscriber_statuses[0].get("status") == SubscriberStatusEnum.RUNNING.value
+    assert subscriber_statuses[0].get("total_record_count") == 10
+    assert subscriber_statuses[0].get("total_failed_count") == 0
+    assert subscriber_statuses[0].get("total_success_count") == 0
 
-    async def test_message_processor_not_updating_to_less(self):
-        await self.msg_processor(get_valid_message(self.request_id, 10, 0, 2), "test_id")
-        subscriber_statuses_without_changes = await pytest._db.db_get_request_status(
-            self.request_id).subscriber_ingestion_statuses
-        self.assertEqual(subscriber_statuses_without_changes[0].total_record_count, 10)
-        self.assertEqual(subscriber_statuses_without_changes[0].total_failed_count, 0)
-        self.assertEqual(subscriber_statuses_without_changes[0].total_success_count, 5)
-        self.assertEqual(len(subscriber_statuses_without_changes), 1)
-        self.assertEqual(subscriber_statuses_without_changes[1].status, SubscriberStatusEnum.RUNNING.value)
 
-    async def test_message_processor_updates_status(self):
-        await self.msg_processor(get_valid_message(self.request_id, 10, 0, 10), "test_id")
-        subscriber_statuses_after_creating_new = await pytest._db.db_get_request_status(
-            self.request_id).subscriber_ingestion_statuses
-        self.assertEqual(len(subscriber_statuses_after_creating_new), 2)
-        self.assertEqual(subscriber_statuses_after_creating_new[1].total_record_count, 10)
-        self.assertEqual(subscriber_statuses_after_creating_new[1].total_failed_count, 0)
-        self.assertEqual(subscriber_statuses_after_creating_new[1].total_success_count, 10)
-        self.assertEqual(subscriber_statuses_after_creating_new[1].status, SubscriberStatusEnum.COMPLETED.value)
+@pytest.mark.asyncio
+async def test_message_processor_update(get_db, get_ingest_data_payload):
+    msg_processor = MessageProcessor()
+    request_id = await get_db.db_insert_new_request(IngestionParamsSchema(**get_ingest_data_payload))
+    valid_msg = get_valid_message(request_id=request_id, total_record_count=10, total_failed_count=0,
+                                  total_success_count=0)
+    valid_schema = SubscriberMessageSchema(**valid_msg)
+    await msg_processor(valid_schema, "test_id")
 
+    valid_msg_with_updated_totals = get_valid_message(request_id=request_id, total_record_count=10,
+                                                      total_failed_count=0,
+                                                      total_success_count=5)
+    valid_schema = SubscriberMessageSchema(**valid_msg_with_updated_totals)
+
+    await msg_processor(valid_schema, "test_id")
+    response_schema = await get_db.db_get_request_status(request_id)
+    subscriber_statuses = response_schema.dict().get("subscriber_ingestion_statuses")
+
+    assert subscriber_statuses is not None
+    assert len(subscriber_statuses) == 1
+    assert subscriber_statuses[0].get("status") == SubscriberStatusEnum.RUNNING.value
+    assert subscriber_statuses[0].get("total_record_count") == 10
+    assert subscriber_statuses[0].get("total_failed_count") == 0
+    assert subscriber_statuses[0].get("total_success_count") == 5
+
+
+@pytest.mark.asyncio
+async def test_message_processor_not_updating_to_less(get_db, get_ingest_data_payload):
+    msg_processor = MessageProcessor()
+    request_id = await get_db.db_insert_new_request(IngestionParamsSchema(**get_ingest_data_payload))
+    valid_msg = get_valid_message(request_id=request_id, total_record_count=10, total_failed_count=0,
+                                  total_success_count=0)
+    valid_schema = SubscriberMessageSchema(**valid_msg)
+    await msg_processor(valid_schema, "test_id")
+
+    valid_msg_with_updated_totals = get_valid_message(request_id=request_id, total_record_count=10,
+                                                      total_failed_count=0, total_success_count=5)
+    valid_schema = SubscriberMessageSchema(**valid_msg_with_updated_totals)
+
+    await msg_processor(valid_schema, "test_id")
+
+    valid_msg_with_updated_totals = get_valid_message(request_id=request_id, total_record_count=10,
+                                                      total_failed_count=0, total_success_count=3)
+    valid_schema = SubscriberMessageSchema(**valid_msg_with_updated_totals)
+
+    await msg_processor(valid_schema, "test_id")
+    response_schema = await get_db.db_get_request_status(request_id)
+    subscriber_statuses = response_schema.dict().get("subscriber_ingestion_statuses")
+
+    assert subscriber_statuses is not None
+    assert len(subscriber_statuses) == 1
+    assert subscriber_statuses[0].get("status") == SubscriberStatusEnum.RUNNING.value
+    assert subscriber_statuses[0].get("total_record_count") == 10
+    assert subscriber_statuses[0].get("total_failed_count") == 0
+    assert subscriber_statuses[0].get("total_success_count") == 5
+
+
+@pytest.mark.asyncio
+async def test_message_processor_updates_status(get_db, get_ingest_data_payload):
+    msg_processor = MessageProcessor()
+    request_id = await get_db.db_insert_new_request(IngestionParamsSchema(**get_ingest_data_payload))
+    valid_msg = get_valid_message(request_id=request_id, total_record_count=10, total_failed_count=0,
+                                  total_success_count=0)
+    valid_schema = SubscriberMessageSchema(**valid_msg)
+    await msg_processor(valid_schema, "test_id")
+
+    valid_msg_with_updated_totals = get_valid_message(request_id=request_id, total_record_count=10,
+                                                      total_failed_count=0, total_success_count=10)
+    valid_schema = SubscriberMessageSchema(**valid_msg_with_updated_totals)
+
+    await msg_processor(valid_schema, "test_id")
+    response_schema = await get_db.db_get_request_status(request_id)
+    subscriber_statuses = response_schema.dict().get("subscriber_ingestion_statuses")
+
+    assert subscriber_statuses is not None
+    assert len(subscriber_statuses) == 1
+    assert subscriber_statuses[0].get("status") == SubscriberStatusEnum.COMPLETED.value
+    assert subscriber_statuses[0].get("total_record_count") == 10
+    assert subscriber_statuses[0].get("total_failed_count") == 0
+    assert subscriber_statuses[0].get("total_success_count") == 10
 
