@@ -15,8 +15,6 @@ class MessageProcessor(StatsProcessor):
         self._db = profile.db_client
 
     async def __call__(self, queue_message: SubscriberMessageSchema, message_id: str) -> None:
-        logger.info(f"-----------Message-----------: \n{queue_message}")
+        logger.info(f"Message: \n{queue_message}")
         if record_id := await self._db.db_create_or_update_subscriber_ingestion_status(queue_message):
-            logger.info(f"\n--------------------------------------------------\n"
-                        f"Created subscriber ingestion status with id: {record_id}\n"
-                        f"--------------------------------------------------")
+            logger.info(f"Created subscriber ingestion status with id: {record_id}")
