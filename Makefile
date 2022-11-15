@@ -136,8 +136,7 @@ build: ## build image, which is used for the services
 	echo $(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
 
 trivy-scan: ## Run trivy scan
-	sudo trivy image -o $(NAME)-report.html --ignore-unfixed --severity CRITICAL --no-progress --exit-code 1 $$(cat $(AZ_IMAGE_ARTIFACT_INFO))
-
+	sudo trivy image --format template --template "${trivy_template_path}" -o $(NAME)-report.html --ignore-unfixed --severity CRITICAL --no-progress --exit-code 1 $$(cat $(AZ_IMAGE_ARTIFACT_INFO))
 docker-push: ## Push image to the docker registry
 	docker push   $(AZURE_REGESTRY_IMAGE_NAME):latest
 	docker push   $$(cat $(AZ_IMAGE_ARTIFACT_INFO))
