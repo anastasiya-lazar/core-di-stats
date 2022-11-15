@@ -149,7 +149,7 @@ deploy_service: ## Deploy stats handler service
 
 
 build_and_deploy: ## Build and Deploy
-build_and_deploy: aks_login build deploy_service
+build_and_deploy: aks_login build docker-push deploy_service
 
 run_tests: ## Run test
 	docker-compose -f ./docker-compose.test.yml up test-app
