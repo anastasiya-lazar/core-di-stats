@@ -32,7 +32,7 @@ def get_connection_string():
     db_endpoint = os.environ.get("DB_ENDPOINT", "")
     db_port = os.environ.get("DB_PORT", "3306")
     db_username = os.environ.get("DB_USERNAME", "")
-    db_password = os.environ.get("DB_PASSWORD", "")
+    db_password = os.environ.get("DB_PASSWORD")
     db_name = os.environ.get("DB_NAME", "")
     db_user_host = os.environ.get("DB_USER_HOST", "")
     if db_user_host:
