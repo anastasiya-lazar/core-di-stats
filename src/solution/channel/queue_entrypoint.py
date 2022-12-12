@@ -26,8 +26,5 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     site = run_non_block(loop)
 
-    task_1 = loop.create_task(site.start())
-    logger.info("Started healthcheck server")
-    task_2 = loop.create_task(main())
-
-    loop.run_forever()
+    tasks = asyncio.gather(main(), site.start())
+    loop.run_until_complete(tasks)
