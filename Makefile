@@ -132,10 +132,15 @@ build: ## build image, which is used for the services
 		-t $(AZURE_REGESTRY_IMAGE_NAME):latest \
 		-f $(WORKDIR)/Dockerfile $(WORKDIR);
 	docker tag $(AZURE_REGESTRY_IMAGE_NAME):latest $(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
-	docker push   $(AZURE_REGESTRY_IMAGE_NAME):latest
-	docker push   $(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
-	echo $(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
 	echo "$(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)" > $(AZ_IMAGE_ARTIFACT_INFO)
+	echo $(AZURE_REGESTRY_IMAGE_NAME):$(AZURE_REGESTRY_TAG)
+
+trivy-scan: ## Run trivy scan
+	sudo trivy image --format template --template "${trivy_template_path}" -o $(NAME)-report.html --ignore-unfixed --severity CRITICAL --no-progress --exit-code 1 $$(cat $(AZ_IMAGE_ARTIFACT_INFO))
+
+docker-push: ## Push image to the docker registry
+	docker push   $(AZURE_REGESTRY_IMAGE_NAME):latest
+	docker push   $$(cat $(AZ_IMAGE_ARTIFACT_INFO))
 
 deploy_service: ## Deploy stats handler service
 	cd $(WORKDIR)/deployment/azure/stats_service && \
@@ -144,8 +149,8 @@ deploy_service: ## Deploy stats handler service
 
 
 build_and_deploy: ## Build and Deploy
-build_and_deploy: aks_login build deploy_service
+build_and_deploy: aks_login build docker-push deploy_service
 
 run_tests: ## Run test
-	docker-compose -f ./docker-compose.test.yml up test-app
-	docker-compose -f ./docker-compose.test.yml down -v
+	docker-compose -f ./docker-compose.test.yml up --build test-app
+	docker-compose -f ./docker-compose.test.yml down -v --remove-orphans

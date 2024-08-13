@@ -73,6 +73,8 @@ spec:
                 secretKeyRef:
                   name: {{.Values.name}}
                   key: DB_SSL_PATH_CERT
+            - name: OTEL_COLLECTOR_URL
+              value: "open-telemetry-collector-collector.tm-stats.svc:4317"
             - name: REST_SERVER_PORT
               value: "{{.Values.container.port}}"
             - name: BST_CORE_COGNITO_CLIENT_ID
@@ -90,6 +92,8 @@ spec:
                   name: {{.Values.name}}
                   key: AUTHENTICATOR_URL
 
+          ports:
+            - containerPort: {{.Values.container.port}}
           livenessProbe:
             httpGet:
               path: /health_check

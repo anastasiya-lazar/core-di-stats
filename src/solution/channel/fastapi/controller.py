@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends
 
 from bst_core.shared.logger import get_logger
 
-from core.api.dtos import IngestionParamsSchema, StatusResponseSchema, IngestProgressDataResponse
+from core.api.dtos import (IngestionParamsSchema, StatusResponseSchema, IngestProgressDataResponse,
+                           CreateIngestionStatusSchema, CreateIngestionStatusResponse, UpdateIngestionStatusSchema,
+                           GetIngestionStatusSchema)
 from core.impl.rest_controller import RestController
 from solution.channel.fastapi.auth_controller import AuthTokenApiKey
 
@@ -25,3 +27,23 @@ async def get_status_of_request(request_id: str):
     """Returns the status of the request with the provided ID."""
     return await rest_controller.get_status_by_request_id(request_id)
 
+
+@router.post("/create-ingestion-status", response_model=CreateIngestionStatusResponse,
+             status_code=201, tags=["ingestion-status"])
+async def create_ingestion_status(payload: CreateIngestionStatusSchema):
+    """Creates a new record in the database with the provided data. Returns the ID of the created record."""
+    return await rest_controller.create_ingestion_status(payload)
+
+
+@router.patch("/update-ingestion-status/{request_id}/{source_id}", status_code=200, tags=["ingestion-status"])
+async def update_ingestion_status(request_id: str, source_id: str, payload: UpdateIngestionStatusSchema):
+    """Updates the record by id with the provided data."""
+    await rest_controller.update_ingestion_status(request_id, source_id, payload)
+    return {"message": "Ingestion status was successfully updated"}
+
+
+@router.get("/get-ingestion-status/{request_id}/{source_id}", response_model=GetIngestionStatusSchema,
+            tags=["ingestion-status"])
+async def get_ingestion_status(request_id: str, source_id: str):
+    """Returns the status of the request with the provided ID."""
+    return await rest_controller.get_ingestion_status(request_id, source_id)

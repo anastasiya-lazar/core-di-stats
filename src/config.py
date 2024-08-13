@@ -21,7 +21,7 @@ DB_ENDPOINT = os.environ.get("DB_ENDPOINT", "")
 DB_PORT = os.environ.get("DB_PORT", "3306")
 DB_USERNAME = os.environ.get("DB_USERNAME", "")
 DB_USER_HOST = os.environ.get("DB_USER_HOST", "")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
 DB_NAME = os.environ.get("DB_NAME", "")
 
 if DB_USER_HOST:
@@ -44,3 +44,14 @@ db_driver = DB_DRIVERS[DB_TYPE]
 REQUEST_DB_CONNECTION_STRING = f"{db_driver}+asyncmy://{DB_USERNAME}:{DB_PASSWORD}@{DB_ENDPOINT}:{DB_PORT}/{DB_NAME}"
 
 AUTHENTICATOR_URL = os.environ.get("AUTHENTICATOR_URL")
+
+STATS_QUEUE_CONNECTION_STRING = os.environ.get(f'STATS_QUEUE_CONNECTION_STRING', '')
+
+HEALTH_CHECK_PORT = os.environ.get("HEALTH_CHECK_PORT", 8998)
+HEALTH_CHECK_LIST = list(filter(None, os.environ.get("HEALTH_CHECK_LIST", "loop_beat,message_proceed").split(",")))
+MAX_DELIVERY_COUNT = int(os.environ.get("MAX_DELIVERY_COUNT", 10))
+
+# Keep the URL empty to use ConsoleSpanExporter or set http://otel-collector:4317 for local OTLPSpanExporter
+OTEL_COLLECTOR_URL = os.environ.get('OTEL_COLLECTOR_URL')
+
+OTEL_CONTEXT_NAME = b'OTEL-CONTEXT'
