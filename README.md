@@ -18,8 +18,7 @@ Main service purpose is to process and save statistics of entities ingestion or 
 
 
 ## Documentation links
-- [Full System Diagram](https://blackswantechnologies.atlassian.net/wiki/spaces/EH/pages/2942009499/KG+Data+Ingestion+-+System+Architecture#Full-System-Diagram)
-- [Stats handler](https://blackswantechnologies.atlassian.net/wiki/spaces/EH/pages/2942009499/KG+Data+Ingestion+-+System+Architecture#Stats-Handler-(Running-Job-Stats-Persistence))
+- [Architecture Diagram](https://pattern-glove-823.notion.site/Architecture-Documentation-736e81ad2d134e8fa586de738dd14ed8)
 
 
 ## Local Development
