@@ -71,7 +71,7 @@ variable "maintainer_team" {
 }
 
 variable "maintainer_contact" {
-  default = "mihail.beliy@blackswan-technologies.com"
+  default = "leloneya@gmail.com"
 }
 
 variable "di_stats_auth_vault_name" {

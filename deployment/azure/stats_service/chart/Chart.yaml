@@ -3,8 +3,8 @@ name: core-di-stats-handler-gen1-srv
 description: A Helm chart for Kubernetes
 maintainers:
   - name: "[Team] Core-Quantum"
-  - name: "[User] Mihail Beliy"
-    email: "mihail.beliy@blackswan-technologies.com"
+  - name: "[User] Anastasiya Lazar"
+    email: "leloneya@gmail.com"
 
 type: application
 
